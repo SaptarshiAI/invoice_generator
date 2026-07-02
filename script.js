@@ -12,6 +12,7 @@ const saveStatus = document.getElementById("saveStatus");
 const presetName = document.getElementById("presetName");
 const presetSelect = document.getElementById("presetSelect");
 
+const defaultDocumentTitle = document.title;
 const storageKey = "invoice-studio-presets";
 const invoiceSequenceKey = "invoice-studio-wizardcog-sequence";
 const wizardCogLogo = "assets/wizardcoglogo-transparent-cropped.png";
@@ -29,7 +30,7 @@ const wizardCogDefaults = {
   invoiceNumber: "#WC-2026-014",
   invoiceStatus: "Unpaid",
   senderName: "WizardCog",
-  senderAddress: "Om Residency, Block - 1, Flat - 7A<br />83A, Cossipore Road, Kolkata - 700002",
+  senderAddress: "Om Residency, Block - 1, Flat - 7A, 83A, Cossipore Road, Kolkata - 700002",
   notes: "Thank you for choosing WizardCog. Payment can be made by bank transfer or UPI.",
   bankName: "HDFC Bank",
   accountNumber: "1234567890",
@@ -56,6 +57,29 @@ function formatCurrency(value) {
 
 function currentInvoiceYear() {
   return new Date().getFullYear();
+}
+
+function addDays(date, days) {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + days);
+  return nextDate;
+}
+
+function formatInvoiceDate(date) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
+function cleanInvoiceFileName(invoiceNumber) {
+  return invoiceNumber.replace(/^#/, "").replace(/[\\/:*?"<>|]/g, "-").trim() || "invoice";
+}
+
+function setInvoiceDates(issueDate = new Date()) {
+  setPresetField("issueDate", formatInvoiceDate(issueDate));
+  setPresetField("dueDate", formatInvoiceDate(addDays(issueDate, 15)));
 }
 
 function buildInvoiceNumber(year, sequence) {
@@ -161,6 +185,7 @@ function setPresetField(name, value) {
 function applyWizardCogDefaults() {
   Object.entries(wizardCogDefaults).forEach(([key, value]) => setPresetField(key, value));
   setPresetField("invoiceNumber", peekNextInvoiceNumber());
+  setInvoiceDates();
   presetName.value = "Corporate Teal Default";
   setLogo(wizardCogLogo);
   clearCoverImage();
@@ -299,9 +324,16 @@ document.getElementById("addItem").addEventListener("click", () => {
 });
 
 document.getElementById("printInvoice").addEventListener("click", () => {
-  setPresetField("invoiceNumber", claimNextInvoiceNumber());
+  const invoiceNumber = claimNextInvoiceNumber();
+  setPresetField("invoiceNumber", invoiceNumber);
+  setInvoiceDates();
+  document.title = cleanInvoiceFileName(invoiceNumber);
   calculateTotals();
   window.print();
+});
+
+window.addEventListener("afterprint", () => {
+  document.title = defaultDocumentTitle;
 });
 
 document.getElementById("newInvoice").addEventListener("click", () => {
@@ -369,4 +401,5 @@ invoicePage.addEventListener("paste", (event) => {
 
 refreshPresetSelect();
 setPresetField("invoiceNumber", peekNextInvoiceNumber());
+setInvoiceDates();
 calculateTotals();

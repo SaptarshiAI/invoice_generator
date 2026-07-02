@@ -564,7 +564,6 @@ select {
   --accent-2: #071f4d;
   --ink: #071b3d;
   --line: #cfd9e5;
-  padding-bottom: 104px;
 }
 
 .template-corporate::before {
@@ -580,14 +579,7 @@ select {
 }
 
 .template-corporate::after {
-  content: "";
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 56px;
-  background: linear-gradient(90deg, #071f4d, #071f4d 82%, #008b99 82%);
-  z-index: 0;
+  content: none;
 }
 
 .template-corporate .invoice-hero {
@@ -625,36 +617,35 @@ select {
 
 .template-corporate .brand-contact p,
 .template-gradient .brand-contact p {
-  display: table;
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  column-gap: 16px;
+  align-items: baseline;
   width: 100%;
-  table-layout: fixed;
   margin: 0;
 }
 
 .template-corporate .brand-contact span,
 .template-gradient .brand-contact span {
-  display: table-cell;
-  width: 148px;
-  padding-right: 20px;
+  display: block;
   color: var(--accent);
   font-size: 0.68rem;
   font-weight: 850;
   letter-spacing: 0.08em;
-  line-height: 1.45;
+  line-height: 1.2;
   text-transform: uppercase;
-  vertical-align: top;
   white-space: nowrap;
 }
 
 .template-corporate .brand-contact strong,
 .template-gradient .brand-contact strong {
-  display: table-cell;
+  display: block;
   color: var(--ink);
-  font-size: 0.9rem;
-  line-height: 1.45;
+  font-size: 0.84rem;
+  line-height: 1.2;
   min-width: 0;
   overflow-wrap: anywhere;
-  vertical-align: top;
+  white-space: normal;
 }
 
 .template-corporate .invoice-title {
@@ -794,12 +785,9 @@ select {
   background: #071f4d;
 }
 
-.template-corporate .contact-box {
-  padding-bottom: 16px;
-}
-
-.template-corporate .invoice-footer {
-  margin-bottom: 0;
+.template-corporate .invoice-footer,
+.template-gradient .invoice-footer {
+  display: none;
 }
 
 .template-gradient {
@@ -1020,10 +1008,6 @@ select {
   color: #ec1685;
 }
 
-.template-gradient .invoice-footer {
-  border-top-color: rgba(77, 53, 232, 0.22);
-}
-
 .template-atelier {
   --paper: #fff8ed;
   --paper-soft: #f7ead8;
@@ -1190,34 +1174,21 @@ select {
   }
 
   .invoice-page {
-    width: 194mm;
-    max-width: 194mm;
-    min-height: calc(297mm - 16mm);
+    width: 100%;
+    max-width: none;
+    min-height: auto;
     margin: 0;
     padding: 0;
     border-radius: 0;
     box-shadow: none;
     overflow: visible;
     font-size: 10.5px;
-    break-inside: avoid;
-    break-after: avoid;
-    page-break-inside: avoid;
-    page-break-after: avoid;
   }
 
   .template-corporate,
   .template-gradient {
-    min-height: calc(297mm - 16mm);
+    min-height: auto;
     padding: 6mm 6mm 14mm;
-  }
-
-  .template-corporate::after {
-    height: 9mm;
-  }
-
-  .template-corporate .invoice-footer {
-    margin-bottom: 0;
-    padding-bottom: 0;
   }
 
   .template-corporate::before {
@@ -1268,14 +1239,19 @@ select {
 
   .template-corporate .brand-contact span,
   .template-gradient .brand-contact span {
-    width: 24mm;
-    padding-right: 4mm;
+    width: auto;
     font-size: 6.5pt;
   }
 
   .template-corporate .brand-contact strong,
   .template-gradient .brand-contact strong {
-    font-size: 8pt;
+    font-size: 7.5pt;
+  }
+
+  .template-corporate .brand-contact p,
+  .template-gradient .brand-contact p {
+    grid-template-columns: 19mm minmax(0, 1fr);
+    column-gap: 3.5mm;
   }
 
   .template-corporate .invoice-title,
