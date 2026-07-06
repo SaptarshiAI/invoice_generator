@@ -16,6 +16,7 @@ const defaultDocumentTitle = document.title;
 const storageKey = "invoice-studio-presets";
 const invoiceSequenceKey = "invoice-studio-wizardcog-sequence";
 const wizardCogLogo = "assets/wizardcoglogo-transparent-cropped.png";
+let invoiceNumberManuallyEdited = false;
 const templateClasses = [
   "template-corporate",
   "template-gradient",
@@ -182,9 +183,14 @@ function setPresetField(name, value) {
   });
 }
 
+function getPresetFieldText(name) {
+  return invoicePage.querySelector(`[data-preset-field="${name}"]`)?.textContent.trim() || "";
+}
+
 function applyWizardCogDefaults() {
   Object.entries(wizardCogDefaults).forEach(([key, value]) => setPresetField(key, value));
   setPresetField("invoiceNumber", peekNextInvoiceNumber());
+  invoiceNumberManuallyEdited = false;
   setInvoiceDates();
   presetName.value = "Corporate Teal Default";
   setLogo(wizardCogLogo);
@@ -242,6 +248,7 @@ function collectInvoiceState() {
 function applyInvoiceState(state) {
   if (!state) return;
   applyTemplate(state.template || "corporate");
+  invoiceNumberManuallyEdited = false;
 
   Object.entries(state.fields || {}).forEach(([key, value]) => {
     setPresetField(key, value);
@@ -324,7 +331,10 @@ document.getElementById("addItem").addEventListener("click", () => {
 });
 
 document.getElementById("printInvoice").addEventListener("click", () => {
-  const invoiceNumber = claimNextInvoiceNumber();
+  const currentInvoiceNumber = getPresetFieldText("invoiceNumber");
+  const invoiceNumber = invoiceNumberManuallyEdited
+    ? currentInvoiceNumber || peekNextInvoiceNumber()
+    : claimNextInvoiceNumber();
   setPresetField("invoiceNumber", invoiceNumber);
   setInvoiceDates();
   document.title = cleanInvoiceFileName(invoiceNumber);
@@ -374,6 +384,9 @@ presetSelect.addEventListener("change", () => {
 invoicePage.addEventListener("input", (event) => {
   const presetField = event.target.closest("[data-preset-field]");
   if (presetField) {
+    if (presetField.dataset.presetField === "invoiceNumber") {
+      invoiceNumberManuallyEdited = true;
+    }
     invoicePage
       .querySelectorAll(`[data-preset-field="${presetField.dataset.presetField}"]`)
       .forEach((field) => {
