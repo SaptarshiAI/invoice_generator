@@ -65,6 +65,35 @@ select {
   top: 0;
 }
 
+.document-nav {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+}
+
+.document-nav a {
+  flex: 1;
+  padding: 10px 8px;
+  border-radius: 5px;
+  color: var(--muted);
+  text-align: center;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.document-nav a:hover,
+.document-nav a:focus-visible {
+  background: rgba(31, 111, 91, 0.08);
+}
+
+.document-nav a[aria-current="page"] {
+  background: var(--accent);
+  color: white;
+}
+
 .brand {
   display: flex;
   gap: 14px;
@@ -1495,5 +1524,38 @@ select {
 
   .remove-line {
     display: none;
+  }
+}
+
+/* The longer quotation title fits the same document layout. */
+[data-document-type="quotation"] .invoice-title p {
+  font-size: 2.5rem;
+}
+
+@media screen and (max-width: 980px) {
+  [data-document-type="quotation"] .invoice-hero,
+  [data-document-type="quotation"] .invoice-meta,
+  [data-document-type="quotation"] .invoice-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  [data-document-type="quotation"] .invoice-title p {
+    text-align: left;
+    font-size: clamp(1.5rem, 6vw, 2.5rem);
+  }
+
+  [data-document-type="quotation"] .brand-contact p,
+  [data-document-type="quotation"] .payment-grid div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  [data-document-type="quotation"] .payment-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media print {
+  [data-document-type="quotation"] .invoice-title p {
+    font-size: 25pt;
   }
 }

@@ -13,8 +13,11 @@ const presetName = document.getElementById("presetName");
 const presetSelect = document.getElementById("presetSelect");
 
 const defaultDocumentTitle = document.title;
-const storageKey = "invoice-studio-presets";
-const invoiceSequenceKey = "invoice-studio-wizardcog-sequence";
+const isQuotation = document.body.dataset.documentType === "quotation";
+const documentType = isQuotation ? "quotation" : "invoice";
+const documentNumberPrefix = isQuotation ? "WC-Q" : "WC";
+const storageKey = `${documentType}-studio-presets`;
+const invoiceSequenceKey = `${documentType}-studio-wizardcog-sequence`;
 const wizardCogLogo = "assets/wizardcoglogo-transparent-cropped.png";
 let invoiceNumberManuallyEdited = false;
 const templateClasses = [
@@ -27,16 +30,18 @@ const templateClasses = [
 const wizardCogDefaults = {
   brandLabel: "ERP That Works Like Magic",
   brandName: "WizardCog",
-  invoiceType: "Invoice",
-  invoiceNumber: "#WC-2026-014",
-  invoiceStatus: "Unpaid",
+  invoiceType: isQuotation ? "Quotation" : "Invoice",
+  invoiceNumber: isQuotation ? "#WC-Q-2026-0001" : "#WC-2026-014",
+  invoiceStatus: isQuotation ? "Draft" : "Unpaid",
   senderName: "WizardCog",
   senderAddress: "Om Residency, Block - 1, Flat - 7A, 83A, Cossipore Road, Kolkata - 700002",
-  notes: "Thank you for choosing WizardCog. Payment can be made by bank transfer or UPI.",
-  bankName: "HDFC Bank",
-  accountNumber: "1234567890",
-  ifscCode: "HDFC0000001",
-  upiId: "wizardcog@upi",
+  notes: isQuotation
+    ? "Thank you for considering WizardCog. This quotation is valid for 15 days from the issue date. Please contact us to confirm acceptance."
+    : "Thank you for choosing WizardCog. Payment can be made by bank transfer.",
+  bankName: isQuotation ? "To be agreed upon acceptance" : "Karur Vysya Bank",
+  accountNumber: isQuotation ? "To be confirmed" : "3101135000023718",
+  ifscCode: isQuotation ? "As listed above" : "KVBL0003101",
+  ...(isQuotation ? { upiId: "Written confirmation required" } : {}),
   supportEmail: "support@wizardcog.com",
   phoneNumber: "+91-7001656375",
   domain: "wizardcog.com",
@@ -75,7 +80,7 @@ function formatInvoiceDate(date) {
 }
 
 function cleanInvoiceFileName(invoiceNumber) {
-  return invoiceNumber.replace(/^#/, "").replace(/[\\/:*?"<>|]/g, "-").trim() || "invoice";
+  return invoiceNumber.replace(/^#/, "").replace(/[\\/:*?"<>|]/g, "-").trim() || documentType;
 }
 
 function setInvoiceDates(issueDate = new Date()) {
@@ -84,7 +89,7 @@ function setInvoiceDates(issueDate = new Date()) {
 }
 
 function buildInvoiceNumber(year, sequence) {
-  return `#WC-${year}-${String(sequence).padStart(4, "0")}`;
+  return `#${documentNumberPrefix}-${year}-${String(sequence).padStart(4, "0")}`;
 }
 
 function getInvoiceSequence() {
@@ -115,7 +120,7 @@ function claimNextInvoiceNumber() {
     );
   } catch {
     // If storage is unavailable, the timestamp keeps printed invoice numbers distinct.
-    return `#WC-${sequence.year}-${Date.now()}`;
+    return `#${documentNumberPrefix}-${sequence.year}-${Date.now()}`;
   }
   return invoiceNumber;
 }
@@ -167,7 +172,7 @@ function setCoverImage(src) {
   imageStrip.classList.remove("is-empty");
   imageStrip.innerHTML = "";
   const img = document.createElement("img");
-  img.alt = "Uploaded invoice visual";
+  img.alt = `Uploaded ${documentType} visual`;
   img.src = src;
   imageStrip.appendChild(img);
 }

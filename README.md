@@ -1,6 +1,6 @@
-# Invoice Generator
+# Invoice & Quotation Generator
 
-A fully editable browser-based invoice template generator for creating consistent client invoices.
+A fully editable browser-based invoice and quotation template generator for creating consistent client documents.
 
 ## Open Locally
 
@@ -62,3 +62,11 @@ Control + C
 - The invoice date updates automatically when printing.
 - The due date is set to 15 days after the invoice date.
 - The Save as PDF filename should use the invoice number as the browser's suggested filename.
+
+## Quotations
+
+Open `http://127.0.0.1:5173/quotation.html`, or select **Quotation** in the sidebar.
+The quotation uses the same five designs, editable items, branding, totals, and PDF printing as the invoice.
+It includes a validity date, draft status, payment terms, and quotation total.
+Quotation presets and numbering are stored separately from invoices; quotation numbers use `WC-Q-YYYY-0001`.
+Printing updates the quotation date to today and its validity to 15 days later, and suggests the quotation number as the PDF filename.
