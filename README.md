@@ -66,7 +66,35 @@ Control + C
 ## Quotations
 
 Open `http://127.0.0.1:5173/quotation.html`, or select **Quotation** in the sidebar.
-The quotation uses the same five designs, editable items, branding, totals, and PDF printing as the invoice.
+The quotation uses the same four designs, editable items, branding, totals, and PDF printing as the invoice.
 It includes a validity date, draft status, payment terms, and quotation total.
 Quotation presets and numbering are stored separately from invoices; quotation numbers use `WC-Q-YYYY-0001`.
 Printing updates the quotation date to today and its validity to 15 days later, and suggests the quotation number as the PDF filename.
+
+## Designs
+
+Choose a design from the **Template** dropdown on the invoice or quotation page:
+
+Porcelain is the default on both pages and when resetting the design or starting a new document.
+
+- **Corporate Teal** — navy and teal with an executive layout.
+- **Atelier** — warm paper tones and premium serif branding.
+- **Signal** — a bold, modern layout with slate and mint accents.
+- **Porcelain** — plum serif headings, blush panels, fine rules, and a spacious editorial layout.
+
+Each design has its own closing details: Corporate Teal uses an angled navy-and-teal footer, Atelier pairs a gold-ruled studio footer with a warm bank folio, Signal uses slate-and-mint contact and payment panels, and Porcelain pairs its curved blush signature panel with a serif payment card. Quotation payment terms use the same design treatments. Footer branding, the closing message, contact details, and payment fields remain editable and save with client presets.
+
+All designs use the common WizardCog logo, business address, contact details, and existing document fields, and support client presets, mobile screens, and A4 PDF printing. Saved presets using a removed design load with Porcelain while preserving the preset's document data.
+
+## Where Client Presets Are Saved
+
+There is no database or backend. Clicking **Save** stores the document snapshot in the browser's `localStorage` as JSON:
+
+- Invoice presets: `invoice-studio-presets`
+- Quotation presets: `quotation-studio-presets`
+
+Each preset includes the template, editable document fields, line items, tax, logo, and optional cover image. Saving under the same name replaces that preset. Unsaved edits are not automatically persisted.
+
+Storage belongs to the current browser profile and exact site origin (protocol, hostname, and port). For example, `http://127.0.0.1:5173` and `http://localhost:5173` have separate storage, as do different ports. Presets survive normal reloads and browser restarts but do not sync across browsers or devices. Clearing site data deletes them; private browsing storage is temporary.
+
+To inspect the saved JSON, open browser developer tools, then **Application / Storage → Local Storage → the current origin**. Invoice and quotation numbering are also stored locally under their respective `*-studio-wizardcog-sequence` keys.

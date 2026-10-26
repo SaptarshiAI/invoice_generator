@@ -29,11 +29,10 @@
           </div>
           <label class="field-label" for="templateSelect">Template</label>
           <select id="templateSelect" class="field-input template-select" aria-label="Choose quotation design">
-            <option value="corporate" selected>Corporate Teal - navy, teal, executive</option>
-            <option value="gradient">Gradient Pro - vibrant modern style</option>
-            <option value="editorial">Editorial - clean magazine layout</option>
+            <option value="corporate">Corporate Teal - navy, teal, executive</option>
             <option value="atelier">Atelier - warm premium brand</option>
             <option value="signal">Signal - bold modern system</option>
+            <option value="porcelain" selected>Porcelain - plum, blush &amp; elegant serif</option>
           </select>
         </section>
 
@@ -43,7 +42,7 @@
             <button class="ghost-button" id="savePreset" type="button">Save</button>
           </div>
           <label class="field-label" for="presetName">Preset name</label>
-          <input id="presetName" class="field-input" value="Corporate Teal Default" />
+          <input id="presetName" class="field-input" value="Porcelain Default" />
           <label class="field-label" for="presetSelect">Saved presets</label>
           <select id="presetSelect" class="field-input">
             <option value="">Choose a saved preset</option>
@@ -87,7 +86,7 @@
           <div class="status-pill" id="saveStatus">Ready</div>
         </div>
 
-        <article class="invoice-page template-corporate" id="invoicePage">
+        <article class="invoice-page template-porcelain" id="invoicePage">
           <header class="invoice-hero">
             <div class="brand-block">
               <div class="logo-box" id="logoBox">
@@ -229,6 +228,11 @@
           </section>
 
           <footer class="invoice-footer">
+            <div class="footer-signoff">
+              <p class="footer-message" contenteditable="true" data-preset-field="footerMessage">Let's build what's next.</p>
+              <h3 contenteditable="true" data-preset-field="brandName">WizardCog</h3>
+              <p class="footer-tagline" contenteditable="true" data-preset-field="brandLabel">ERP That Works Like Magic</p>
+            </div>
             <div class="contact-box">
               <span>Contact</span>
               <div class="contact-grid">

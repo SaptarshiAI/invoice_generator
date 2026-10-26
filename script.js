@@ -13,6 +13,7 @@ const presetName = document.getElementById("presetName");
 const presetSelect = document.getElementById("presetSelect");
 
 const defaultDocumentTitle = document.title;
+const defaultTemplate = "porcelain";
 const isQuotation = document.body.dataset.documentType === "quotation";
 const documentType = isQuotation ? "quotation" : "invoice";
 const documentNumberPrefix = isQuotation ? "WC-Q" : "WC";
@@ -22,14 +23,14 @@ const wizardCogLogo = "assets/wizardcoglogo-transparent-cropped.png";
 let invoiceNumberManuallyEdited = false;
 const templateClasses = [
   "template-corporate",
-  "template-gradient",
-  "template-editorial",
   "template-atelier",
   "template-signal",
+  "template-porcelain",
 ];
 const wizardCogDefaults = {
   brandLabel: "ERP That Works Like Magic",
   brandName: "WizardCog",
+  footerMessage: "Let's build what's next.",
   invoiceType: isQuotation ? "Quotation" : "Invoice",
   invoiceNumber: isQuotation ? "#WC-Q-2026-0001" : "#WC-2026-014",
   invoiceStatus: isQuotation ? "Draft" : "Unpaid",
@@ -197,7 +198,7 @@ function applyWizardCogDefaults() {
   setPresetField("invoiceNumber", peekNextInvoiceNumber());
   invoiceNumberManuallyEdited = false;
   setInvoiceDates();
-  presetName.value = "Corporate Teal Default";
+  presetName.value = `${templateSelect.selectedOptions[0].textContent.split(" - ")[0]} Default`;
   setLogo(wizardCogLogo);
   clearCoverImage();
 }
@@ -241,7 +242,7 @@ function collectInvoiceState() {
   }));
 
   return {
-    template: invoicePage.className.match(/template-\w+/)?.[0]?.replace("template-", "") || "editorial",
+    template: invoicePage.className.match(/template-\w+/)?.[0]?.replace("template-", "") || defaultTemplate,
     fields,
     items,
     tax: taxAmount.innerHTML,
@@ -252,7 +253,7 @@ function collectInvoiceState() {
 
 function applyInvoiceState(state) {
   if (!state) return;
-  applyTemplate(state.template || "corporate");
+  applyTemplate(state.template || defaultTemplate);
   invoiceNumberManuallyEdited = false;
 
   Object.entries(state.fields || {}).forEach(([key, value]) => {
@@ -292,11 +293,14 @@ function refreshPresetSelect() {
 }
 
 function applyTemplate(template, options = {}) {
-  const normalizedTemplate = template === "wizardcog" ? "corporate" : template;
-  invoicePage.classList.remove(...templateClasses);
+  const requestedTemplate = template === "wizardcog" ? "corporate" : template;
+  const normalizedTemplate = templateClasses.includes(`template-${requestedTemplate}`)
+    ? requestedTemplate
+    : defaultTemplate;
+  invoicePage.classList.remove(...[...invoicePage.classList].filter((name) => name.startsWith("template-")));
   invoicePage.classList.add(`template-${normalizedTemplate}`);
   if (templateSelect) templateSelect.value = normalizedTemplate;
-  if (normalizedTemplate === "corporate" && options.applyDefaults) {
+  if (options.applyDefaults) {
     applyWizardCogDefaults();
   }
 }
@@ -356,7 +360,7 @@ document.getElementById("newInvoice").addEventListener("click", () => {
 });
 
 document.getElementById("resetDesign").addEventListener("click", () => {
-  applyTemplate("corporate", { applyDefaults: true });
+  applyTemplate(defaultTemplate, { applyDefaults: true });
   clearCoverImage();
   setStatus("Design reset");
 });

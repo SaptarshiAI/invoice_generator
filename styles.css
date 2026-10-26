@@ -179,6 +179,7 @@ select {
 }
 
 .upload-card {
+  position: relative;
   display: grid;
   gap: 2px;
   padding: 14px;
@@ -190,6 +191,9 @@ select {
 
 .upload-card input {
   position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
   opacity: 0;
 }
@@ -533,6 +537,10 @@ select {
   color: var(--muted);
 }
 
+.footer-signoff {
+  display: none;
+}
+
 .payment-box,
 .contact-box {
   display: grid;
@@ -644,8 +652,7 @@ select {
   color: #071b3d;
 }
 
-.template-corporate .brand-contact p,
-.template-gradient .brand-contact p {
+.template-corporate .brand-contact p {
   display: grid;
   grid-template-columns: 96px minmax(0, 1fr);
   column-gap: 16px;
@@ -654,8 +661,7 @@ select {
   margin: 0;
 }
 
-.template-corporate .brand-contact span,
-.template-gradient .brand-contact span {
+.template-corporate .brand-contact span {
   display: block;
   color: var(--accent);
   font-size: 0.68rem;
@@ -666,8 +672,7 @@ select {
   white-space: nowrap;
 }
 
-.template-corporate .brand-contact strong,
-.template-gradient .brand-contact strong {
+.template-corporate .brand-contact strong {
   display: block;
   color: var(--ink);
   font-size: 0.84rem;
@@ -688,8 +693,7 @@ select {
   text-align: left;
 }
 
-.template-corporate .invoice-title > strong,
-.template-gradient .invoice-title > strong {
+.template-corporate .invoice-title > strong {
   display: none;
 }
 
@@ -710,8 +714,7 @@ select {
   text-align: right;
 }
 
-.template-corporate .invoice-info-card div,
-.template-gradient .invoice-info-card div {
+.template-corporate .invoice-info-card div {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 18px;
@@ -720,13 +723,11 @@ select {
   border-bottom: 1px solid rgba(7, 31, 77, 0.11);
 }
 
-.template-corporate .invoice-info-card div:last-child,
-.template-gradient .invoice-info-card div:last-child {
+.template-corporate .invoice-info-card div:last-child {
   border-bottom: 0;
 }
 
-.template-corporate .invoice-info-card span,
-.template-gradient .invoice-info-card span {
+.template-corporate .invoice-info-card span {
   color: var(--ink);
   font-size: 0.82rem;
   font-weight: 750;
@@ -812,229 +813,6 @@ select {
 
 .template-corporate .grand-total {
   background: #071f4d;
-}
-
-.template-corporate .invoice-footer,
-.template-gradient .invoice-footer {
-  display: none;
-}
-
-.template-gradient {
-  --paper: #fffefe;
-  --paper-soft: #f1efff;
-  --accent: #4d35e8;
-  --accent-2: #00bcd4;
-  --ink: #12143b;
-  --line: #dcd8ff;
-}
-
-.template-gradient::before,
-.template-gradient::after {
-  content: none;
-}
-
-.template-gradient .invoice-hero {
-  grid-template-columns: 1.1fr 0.82fr;
-  border-bottom: 0;
-  padding: 10px 0 30px;
-}
-
-.template-gradient .brand-block {
-  gap: 32px;
-  align-items: start;
-}
-
-.template-gradient .logo-box {
-  width: 220px;
-  height: 170px;
-  border: 0;
-  background: transparent;
-}
-
-.template-gradient .logo-box img {
-  padding: 0;
-}
-
-.template-gradient .brand-block h2 {
-  color: #4d35e8;
-  font-size: 2.2rem;
-  letter-spacing: 0;
-}
-
-.template-gradient .brand-contact {
-  display: grid;
-  gap: 9px;
-  margin-top: 22px;
-  padding-left: 22px;
-  border-left: 1px solid rgba(77, 53, 232, 0.24);
-}
-
-.template-gradient .eyebrow {
-  color: #00a6d5;
-}
-
-.template-gradient .invoice-title {
-  display: grid;
-  gap: 18px;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.template-gradient .invoice-info-card {
-  display: grid;
-  padding: 22px;
-  border: 1px solid rgba(77, 53, 232, 0.2);
-  border-radius: 18px;
-  background:
-    radial-gradient(circle at top left, rgba(77, 53, 232, 0.12), transparent 42%),
-    #fff;
-  box-shadow: 0 16px 32px rgba(77, 53, 232, 0.14);
-}
-
-.template-gradient .invoice-info-card::before {
-  content: "Invoice Information";
-  color: #4d35e8;
-  font-size: 0.9rem;
-  font-weight: 850;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-}
-
-.template-gradient .invoice-info-card strong {
-  color: #12143b;
-  font-size: 0.92rem;
-}
-
-.template-gradient .invoice-info-card div:last-child strong {
-  display: inline-grid;
-  place-items: center;
-  width: max-content;
-  min-width: 68px;
-  min-height: 24px;
-  padding: 3px 12px;
-  border-radius: 999px;
-  color: #fff;
-  background: #12b89c;
-}
-
-.template-gradient .invoice-title p {
-  margin: 0;
-  color: #4d35e8;
-  font-size: clamp(3rem, 5vw, 4.6rem);
-  line-height: 0.9;
-  letter-spacing: 0.02em;
-  text-align: right;
-}
-
-.template-gradient .invoice-title strong {
-  color: #12143b;
-}
-
-.template-gradient .invoice-meta {
-  grid-template-columns: 1fr 1fr;
-  gap: 22px;
-}
-
-.template-gradient .meta-card.compact {
-  display: none;
-}
-
-.template-gradient .meta-card {
-  position: relative;
-  padding: 26px 28px 24px 96px;
-  min-height: 190px;
-}
-
-.template-gradient .meta-card::before {
-  content: "";
-  position: absolute;
-  top: 20px;
-  left: 22px;
-  width: 52px;
-  height: 52px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #4d35e8, #00bcd4);
-  box-shadow: 0 12px 24px rgba(77, 53, 232, 0.18);
-}
-
-.template-gradient .meta-card:first-child::before {
-  background: linear-gradient(135deg, #4d35e8, #5e55ff);
-}
-
-.template-gradient .meta-card:nth-child(2)::before {
-  background: linear-gradient(135deg, #00bcd4, #12b89c);
-}
-
-.template-gradient .meta-card > span:first-child {
-  font-size: 1rem;
-}
-
-.template-gradient .invoice-title {
-  text-align: left;
-}
-
-.template-gradient .meta-card,
-.template-gradient .note-box,
-.template-gradient .totals-card,
-.template-gradient .payment-grid div,
-.template-gradient .contact-grid div {
-  border-color: rgba(77, 53, 232, 0.2);
-  box-shadow: 0 14px 28px rgba(77, 53, 232, 0.06);
-}
-
-.template-gradient .meta-card > span:first-child,
-.template-gradient .payment-box > span,
-.template-gradient .contact-box > span {
-  color: #4d35e8;
-}
-
-.template-gradient .meta-card:nth-child(2) > span:first-child {
-  color: #00a6d5;
-}
-
-.template-gradient .table-head {
-  background: linear-gradient(90deg, #4d35e8, #1e8df0 72%, #ec1685);
-}
-
-.template-gradient .line-item > div:first-child {
-  font-weight: 750;
-}
-
-.template-gradient .payment-section {
-  padding: 0;
-}
-
-.template-gradient .payment-box {
-  padding: 0;
-  border: 1px solid rgba(0, 188, 212, 0.24);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.template-gradient .payment-box > span {
-  padding: 14px 18px;
-  color: #fff;
-  background: linear-gradient(90deg, #4d35e8, #00bcd4);
-}
-
-.template-gradient .payment-grid {
-  padding: 14px;
-}
-
-.template-gradient .grand-total {
-  background: linear-gradient(90deg, #4d35e8, #2519bf);
-}
-
-.template-gradient .note-box {
-  border-color: rgba(236, 22, 133, 0.28);
-}
-
-.template-gradient .note-box span {
-  color: #ec1685;
 }
 
 .template-atelier {
@@ -1214,8 +992,7 @@ select {
     font-size: 10.5px;
   }
 
-  .template-corporate,
-  .template-gradient {
+  .template-corporate {
     min-height: auto;
     padding: 6mm 6mm 14mm;
   }
@@ -1226,15 +1003,13 @@ select {
     height: 88mm;
   }
 
-  .template-corporate .invoice-hero,
-  .template-gradient .invoice-hero {
+  .template-corporate .invoice-hero {
     grid-template-columns: 1fr 72mm;
     gap: 6mm;
     padding: 0 0 5mm;
   }
 
-  .template-corporate .brand-block,
-  .template-gradient .brand-block {
+  .template-corporate .brand-block {
     gap: 5mm;
   }
 
@@ -1243,72 +1018,52 @@ select {
     height: 19mm;
   }
 
-  .template-gradient .logo-box {
-    width: 38mm;
-    height: 28mm;
-  }
-
-  .template-corporate .brand-block h2,
-  .template-gradient .brand-block h2 {
+  .template-corporate .brand-block h2 {
     font-size: 24pt;
     line-height: 1;
   }
 
-  .template-corporate .eyebrow,
-  .template-gradient .eyebrow {
+  .template-corporate .eyebrow {
     margin-bottom: 2mm;
     font-size: 7pt;
   }
 
-  .template-corporate .brand-contact,
-  .template-gradient .brand-contact {
+  .template-corporate .brand-contact {
     gap: 1.5mm;
     margin-top: 4mm;
   }
 
-  .template-corporate .brand-contact span,
-  .template-gradient .brand-contact span {
+  .template-corporate .brand-contact span {
     width: auto;
     font-size: 6.5pt;
   }
 
-  .template-corporate .brand-contact strong,
-  .template-gradient .brand-contact strong {
+  .template-corporate .brand-contact strong {
     font-size: 7.5pt;
   }
 
-  .template-corporate .brand-contact p,
-  .template-gradient .brand-contact p {
+  .template-corporate .brand-contact p {
     grid-template-columns: 19mm minmax(0, 1fr);
     column-gap: 3.5mm;
   }
 
-  .template-corporate .invoice-title,
-  .template-gradient .invoice-title {
+  .template-corporate .invoice-title {
     gap: 4mm;
   }
 
-  .template-corporate .invoice-title p,
-  .template-gradient .invoice-title p {
+  .template-corporate .invoice-title p {
     font-size: 28pt;
     line-height: 0.9;
   }
 
-  .template-corporate .invoice-info-card,
-  .template-gradient .invoice-info-card {
+  .template-corporate .invoice-info-card {
     padding: 4mm;
     border-radius: 3mm;
   }
 
-  .template-corporate .invoice-info-card div,
-  .template-gradient .invoice-info-card div {
+  .template-corporate .invoice-info-card div {
     gap: 4mm;
     padding: 1.6mm 0;
-  }
-
-  .template-gradient .invoice-info-card::before {
-    margin-bottom: 2mm;
-    font-size: 7pt;
   }
 
   .invoice-hero {
@@ -1366,8 +1121,7 @@ select {
     padding: 4mm;
   }
 
-  .template-corporate .invoice-meta,
-  .template-gradient .invoice-meta {
+  .template-corporate .invoice-meta {
     gap: 4mm;
     margin: 4mm 0;
   }
@@ -1378,22 +1132,6 @@ select {
 
   .template-corporate .meta-card > span:first-child {
     padding: 3.5mm 5mm;
-  }
-
-  .template-gradient .meta-card {
-    min-height: 34mm;
-    padding: 7mm 5mm 5mm 19mm;
-  }
-
-  .template-gradient .meta-card::before {
-    top: 5mm;
-    left: 5mm;
-    width: 10mm;
-    height: 10mm;
-  }
-
-  .template-gradient .meta-card > span:first-child {
-    font-size: 8pt;
   }
 
   .invoice-table {
@@ -1422,8 +1160,7 @@ select {
     page-break-inside: avoid;
   }
 
-  .template-corporate .line-item,
-  .template-gradient .line-item {
+  .template-corporate .line-item {
     padding: 2.4mm 3.5mm;
   }
 
@@ -1445,13 +1182,11 @@ select {
     padding: 3.4mm 4mm;
   }
 
-  .template-corporate .invoice-summary,
-  .template-gradient .invoice-summary {
+  .template-corporate .invoice-summary {
     margin-top: 4mm;
   }
 
-  .template-corporate .totals-card > div,
-  .template-gradient .totals-card > div {
+  .template-corporate .totals-card > div {
     padding: 2.4mm 3.5mm;
   }
 
@@ -1465,17 +1200,8 @@ select {
     page-break-inside: avoid;
   }
 
-  .template-corporate .payment-section,
-  .template-gradient .payment-section {
+  .template-corporate .payment-section {
     margin-top: 4mm;
-  }
-
-  .template-gradient .payment-box > span {
-    padding: 2.8mm 4mm;
-  }
-
-  .template-gradient .payment-grid {
-    padding: 3mm;
   }
 
   .invoice-footer {
@@ -1510,9 +1236,7 @@ select {
   }
 
   .template-corporate .payment-grid div,
-  .template-corporate .contact-grid div,
-  .template-gradient .payment-grid div,
-  .template-gradient .contact-grid div {
+  .template-corporate .contact-grid div {
     padding: 2mm 2.5mm;
   }
 
@@ -1520,6 +1244,10 @@ select {
   [contenteditable="true"]:focus {
     background: transparent;
     outline-color: transparent;
+  }
+
+  [contenteditable="true"] {
+    caret-color: transparent;
   }
 
   .remove-line {
@@ -1557,5 +1285,1130 @@ select {
 @media print {
   [data-document-type="quotation"] .invoice-title p {
     font-size: 25pt;
+  }
+}
+
+/* Porcelain document structure. */
+.template-porcelain {
+  padding: 44px;
+  color: var(--ink);
+  --muted: #656b72;
+}
+
+.template-porcelain .brand-block,
+.template-porcelain .brand-block > div,
+.template-porcelain .invoice-title {
+  min-width: 0;
+}
+
+.template-porcelain .logo-box {
+  flex: 0 0 auto;
+  width: 76px;
+  height: 76px;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+}
+
+.template-porcelain .brand-block h2 {
+  font-size: 2.4rem;
+}
+
+.template-porcelain .eyebrow {
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  line-height: 1.5;
+}
+
+.template-porcelain .brand-contact {
+  display: block;
+  margin-top: 14px;
+  max-width: 310px;
+}
+
+.template-porcelain .brand-contact p {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.65;
+}
+
+.template-porcelain .brand-contact span,
+.template-porcelain .brand-contact p:not(:first-child),
+.template-porcelain .invoice-title > strong,
+.template-porcelain .meta-card.compact {
+  display: none;
+}
+
+.template-porcelain .brand-contact strong {
+  font-weight: 450;
+}
+
+.template-porcelain .invoice-info-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 20px;
+  text-align: left;
+}
+
+.template-porcelain .invoice-info-card div {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.template-porcelain .invoice-info-card span {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.template-porcelain .invoice-info-card strong {
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.template-porcelain .invoice-meta {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
+  margin: 30px 0;
+}
+
+.template-porcelain .meta-card {
+  padding: 0 0 0 16px;
+  border: 0;
+  border-left: 2px solid var(--accent);
+  border-radius: 0;
+  background: transparent;
+}
+
+.template-porcelain .meta-card p,
+.template-porcelain .note-box p {
+  font-size: 0.82rem;
+}
+
+.template-porcelain .invoice-table,
+.template-porcelain .totals-card {
+  border-radius: 0;
+}
+
+.template-porcelain .table-head,
+.template-porcelain .line-item {
+  grid-template-columns: minmax(0, 1fr) 42px 90px 104px;
+  gap: 12px;
+}
+
+.template-porcelain .line-item {
+  font-size: 0.85rem;
+  min-height: 64px;
+}
+
+.template-porcelain .line-item > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.template-porcelain .table-head > :not(:first-child),
+.template-porcelain .line-item > div:not(:first-child) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.template-porcelain .line-item > div:last-of-type {
+  padding-right: 10px;
+}
+
+.template-porcelain .invoice-summary {
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 0.9fr);
+  gap: 28px;
+}
+
+.template-porcelain .note-box {
+  padding: 18px 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+}
+
+.template-porcelain .totals-card > div {
+  padding: 14px 18px;
+}
+
+.template-porcelain .payment-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+[data-document-type="quotation"] .template-porcelain .payment-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.template-porcelain .payment-grid div,
+.template-porcelain .contact-grid div {
+  min-width: 0;
+  padding: 12px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.template-porcelain .payment-grid strong,
+.template-porcelain .contact-grid strong {
+  font-size: 0.78rem;
+}
+
+.template-porcelain .payment-grid small,
+.template-porcelain .contact-grid small {
+  font-size: 0.6rem;
+}
+
+.template-porcelain .invoice-footer {
+  gap: 24px;
+  margin: auto -44px -44px;
+  padding: 28px 44px;
+  border-top: 0;
+}
+
+.template-porcelain .footer-signoff {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.template-porcelain .footer-signoff h3 {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.045em;
+  overflow-wrap: anywhere;
+}
+
+.template-porcelain .footer-message {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.template-porcelain .footer-tagline {
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.template-porcelain .contact-box > span {
+  display: none;
+}
+
+.template-porcelain .contact-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Porcelain: a serif title, blush paper details, and fine plum rules. */
+.template-porcelain {
+  --paper: #fffdfa;
+  --paper-soft: #f5e9ed;
+  --ink: #40283d;
+  --accent: #834761;
+  --accent-2: #bd8192;
+  --muted: #786571;
+  --line: #e7dbe0;
+  border-top: 6px solid var(--accent);
+}
+
+.template-porcelain .invoice-hero {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 30px;
+  padding: 0 0 26px;
+  border-bottom: 1px solid var(--accent-2);
+}
+
+.template-porcelain .brand-block {
+  align-items: center;
+}
+
+.template-porcelain .brand-block h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+}
+
+.template-porcelain .brand-contact {
+  max-width: 440px;
+  margin-top: 10px;
+}
+
+.template-porcelain .invoice-title {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 24px;
+  padding: 28px 0 0;
+  border-top: 1px solid var(--line);
+}
+
+.template-porcelain .invoice-title p {
+  margin: 0;
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 3.8rem;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.05em;
+  text-transform: none;
+  text-align: left;
+  line-height: 1.15;
+}
+
+.template-porcelain .invoice-info-card span {
+  color: var(--muted);
+}
+
+.template-porcelain .invoice-info-card div:last-child strong {
+  color: var(--accent);
+}
+
+.template-porcelain .invoice-table {
+  border-width: 1px 0;
+}
+
+.template-porcelain .table-head {
+  color: var(--ink);
+  background: var(--paper-soft);
+}
+
+.template-porcelain .totals-card {
+  border: 0;
+  background: var(--paper-soft);
+}
+
+.template-porcelain .grand-total {
+  background: var(--ink);
+}
+
+.template-porcelain .grand-total strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.65rem;
+  font-weight: 400;
+}
+
+.template-porcelain .payment-section {
+  margin-bottom: 32px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.template-porcelain .invoice-footer {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  align-items: center;
+  border-radius: 48px 0 0 0;
+  background: var(--paper-soft);
+  color: var(--ink);
+}
+
+.template-porcelain .footer-signoff h3 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 2.7rem;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.template-porcelain .footer-message {
+  color: var(--accent);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+}
+
+.template-porcelain .footer-tagline {
+  color: var(--muted);
+}
+
+.template-porcelain .contact-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+.template-porcelain .contact-grid div {
+  grid-template-columns: 78px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #ddc6d0;
+}
+
+.template-porcelain .contact-grid div:last-child {
+  border-bottom: 0;
+}
+
+.template-porcelain .contact-grid strong {
+  font-weight: 500;
+}
+
+@media screen and (max-width: 1100px) {
+  .template-porcelain .invoice-title {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .template-porcelain .invoice-title p {
+    text-align: left;
+  }
+
+  .template-porcelain .invoice-footer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media screen and (max-width: 640px) {
+  .template-porcelain {
+    padding: 24px;
+  }
+
+  .template-porcelain .invoice-footer {
+    margin: auto -24px -24px;
+    padding: 28px 24px;
+  }
+
+  .template-porcelain .footer-signoff h3 {
+    font-size: 2.4rem;
+  }
+
+  .template-porcelain .invoice-meta,
+  .template-porcelain .invoice-summary,
+  .template-porcelain .payment-grid,
+  [data-document-type="quotation"] .template-porcelain .payment-grid,
+  .template-porcelain .contact-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .template-porcelain .brand-block {
+    flex-direction: row;
+    gap: 12px;
+  }
+
+  .template-porcelain .brand-block h2 {
+    font-size: 1.8rem;
+  }
+
+  .template-porcelain .logo-box {
+    width: 52px;
+    height: 60px;
+  }
+
+  .template-porcelain .line-item {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px 8px;
+  }
+
+  .template-porcelain .line-item > div:not(:first-child) {
+    text-align: left;
+  }
+
+  .template-porcelain .line-item > div:nth-child(2)::before {
+    content: "Qty ";
+    color: var(--muted);
+  }
+
+  .template-porcelain .line-item > div:nth-child(3)::before {
+    content: "Rate ";
+    color: var(--muted);
+  }
+
+  .template-porcelain .line-item > .line-total {
+    text-align: right;
+  }
+
+  .template-porcelain .invoice-title p {
+    font-size: 3rem;
+  }
+}
+
+@media print {
+  .template-porcelain {
+    padding: 6mm;
+    font-size: 9pt;
+  }
+
+  .template-porcelain .logo-box {
+    width: 18mm;
+    height: 18mm;
+  }
+
+  .template-porcelain .brand-block h2 {
+    font-size: 25pt;
+  }
+
+  .template-porcelain .eyebrow,
+  .template-porcelain .invoice-info-card span,
+  .template-porcelain .payment-grid small,
+  .template-porcelain .contact-grid small {
+    font-size: 6.5pt;
+  }
+
+  .template-porcelain .brand-contact p {
+    font-size: 7.5pt;
+  }
+
+  .template-porcelain .invoice-info-card {
+    gap: 4mm;
+  }
+
+  .template-porcelain .invoice-info-card strong,
+  .template-porcelain .payment-grid strong,
+  .template-porcelain .contact-grid strong {
+    font-size: 8pt;
+  }
+
+  .template-porcelain .invoice-hero {
+    padding: 0 0 5mm;
+    gap: 5mm;
+  }
+
+  .template-porcelain .invoice-title {
+    padding-top: 5mm;
+  }
+
+  .template-porcelain .invoice-title p {
+    font-size: 32pt;
+  }
+
+  .template-porcelain .invoice-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 6mm 0;
+    gap: 6mm;
+  }
+
+  .template-porcelain .meta-card {
+    padding: 0 0 0 4mm;
+  }
+
+  .template-porcelain .meta-card p,
+  .template-porcelain .note-box p {
+    font-size: 8.5pt;
+  }
+
+  .template-porcelain .table-head,
+  .template-porcelain .line-item {
+    grid-template-columns: minmax(0, 1fr) 12mm 25mm 28mm;
+    gap: 3mm;
+  }
+
+  .template-porcelain .line-item {
+    min-height: 13mm;
+    font-size: 9pt;
+  }
+
+  .template-porcelain .invoice-summary {
+    grid-template-columns: minmax(0, 1fr) 66mm;
+    gap: 6mm;
+    margin-top: 6mm;
+  }
+
+  .template-porcelain .totals-card > div {
+    padding: 3mm 4mm;
+  }
+
+  .template-porcelain .payment-section {
+    margin: 6mm 0;
+    padding: 4mm;
+  }
+
+  .template-porcelain .payment-grid div,
+  .template-porcelain .contact-grid div {
+    padding: 2mm 0;
+  }
+
+  .template-porcelain .invoice-footer {
+    margin: auto -6mm -6mm;
+    padding: 5mm 6mm;
+    gap: 4mm;
+  }
+
+  .template-porcelain .footer-signoff {
+    gap: 1.5mm;
+  }
+
+  .template-porcelain .footer-signoff h3 {
+    font-size: 25pt;
+  }
+
+  .template-porcelain .footer-message {
+    font-size: 6.5pt;
+  }
+
+  .template-porcelain .footer-tagline {
+    font-size: 7.5pt;
+  }
+
+  .template-porcelain .contact-grid div {
+    grid-template-columns: 18mm minmax(0, 1fr);
+    gap: 2mm;
+    padding: 2mm 0;
+  }
+}
+
+/* Closing details retain the typography and palette of each document. */
+:is(.template-corporate, .template-atelier, .template-signal) .invoice-footer {
+  display: grid;
+  gap: 20px;
+  color: var(--ink);
+}
+
+:is(.template-corporate, .template-atelier, .template-signal) .footer-signoff {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+:is(.template-corporate, .template-atelier, .template-signal) .footer-signoff h3 {
+  margin: 0;
+  font-size: 1.9rem;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  overflow-wrap: anywhere;
+}
+
+:is(.template-corporate, .template-atelier, .template-signal) .footer-message {
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+:is(.template-corporate, .template-atelier, .template-signal) .footer-tagline {
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+:is(.template-corporate, .template-atelier, .template-signal) .contact-box > span {
+  display: none;
+}
+
+:is(.template-corporate, .template-atelier, .template-signal) .contact-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+:is(.template-corporate, .template-atelier, .template-signal) .contact-grid div {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+:is(.template-corporate, .template-atelier, .template-signal) .contact-grid small {
+  font-size: 0.58rem;
+}
+
+:is(.template-corporate, .template-atelier, .template-signal) .contact-grid strong {
+  font-size: 0.76rem;
+  font-weight: 550;
+}
+
+:is(.template-atelier, .template-signal, .template-porcelain) .payment-section {
+  margin-bottom: 28px;
+}
+
+:is(.template-atelier, .template-signal, .template-porcelain) .payment-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+}
+
+:is(.template-atelier, .template-signal, .template-porcelain) .payment-grid div {
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+:is(.template-atelier, .template-signal, .template-porcelain) .payment-grid small {
+  font-size: 0.61rem;
+  line-height: 1.5;
+}
+
+:is(.template-atelier, .template-signal, .template-porcelain) .payment-grid strong {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-document-type="quotation"] :is(.template-atelier, .template-signal, .template-porcelain) .payment-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Atelier: a warm bank folio and a gold-ruled studio colophon. */
+.template-atelier .payment-box {
+  gap: 16px;
+  padding: 22px 24px;
+  border: 1px solid #dcc5a3;
+  border-left: 4px solid var(--accent-2);
+  background: #fcf0de;
+}
+
+.template-atelier .payment-box > span {
+  color: var(--accent);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.25rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.template-atelier .payment-grid div {
+  align-content: start;
+  gap: 8px;
+  padding: 0 16px;
+  border-left: 1px solid #dcc5a3;
+}
+
+.template-atelier .payment-grid div:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.template-atelier .payment-grid small {
+  color: var(--accent);
+}
+
+.template-atelier .payment-grid [data-preset-field="bankName"] {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.1rem;
+}
+
+.template-atelier .invoice-footer {
+  gap: 18px;
+  padding: 24px 0 4px;
+  border-top: 3px double var(--accent-2);
+  text-align: center;
+}
+
+.template-atelier .footer-signoff h3 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 2.5rem;
+  font-weight: 400;
+}
+
+.template-atelier .footer-message {
+  color: var(--accent);
+}
+
+.template-atelier .footer-tagline {
+  color: #7b6655;
+  font-style: italic;
+}
+
+.template-atelier .contact-grid {
+  padding-top: 16px;
+  border-top: 1px solid #dcc5a3;
+}
+
+.template-atelier .contact-grid small {
+  color: var(--accent);
+}
+
+/* Signal: a slate index tab and a precise, mint-accented closing panel. */
+.template-signal .payment-box {
+  grid-template-columns: 145px minmax(0, 1fr);
+  gap: 0;
+  border: 1px solid #d7e3ea;
+  background: var(--paper-soft);
+}
+
+.template-signal .payment-box > span {
+  display: grid;
+  align-content: center;
+  padding: 20px;
+  border-left: 4px solid var(--accent-2);
+  color: #ffffff;
+  background: var(--accent);
+  line-height: 1.6;
+}
+
+.template-signal .payment-grid div {
+  align-content: center;
+  gap: 8px;
+  padding: 20px 16px;
+  border-left: 1px solid #d7e3ea;
+}
+
+.template-signal .payment-grid small {
+  color: #536578;
+}
+
+.template-signal .payment-grid strong {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.78rem;
+}
+
+.template-signal .invoice-footer {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: 28px;
+  padding: 24px;
+  border: 0;
+  border-top: 4px solid var(--accent-2);
+  color: #ffffff;
+  background: var(--accent);
+}
+
+.template-signal .footer-message {
+  color: #a7e2d5;
+}
+
+.template-signal .footer-tagline {
+  color: #d2e0e7;
+}
+
+.template-signal .contact-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+.template-signal .contact-grid div {
+  grid-template-columns: 78px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #506177;
+}
+
+.template-signal .contact-grid div:last-child {
+  border-bottom: 0;
+}
+
+.template-signal .contact-grid small {
+  color: #a7e2d5;
+}
+
+.template-signal .contact-grid strong {
+  color: #ffffff;
+}
+
+/* Corporate Teal: an angled navy-to-teal brand ribbon. */
+.template-corporate .payment-section {
+  margin-bottom: 28px;
+}
+
+.template-corporate .invoice-footer {
+  position: relative;
+  margin: auto -52px -52px;
+  padding: 26px 52px;
+  border: 0;
+  border-top: 4px solid var(--accent);
+  color: #ffffff;
+  background: var(--accent-2);
+}
+
+.template-corporate .invoice-footer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #006e83;
+  clip-path: polygon(82% 0, 100% 0, 100% 100%, 66% 100%);
+}
+
+.template-corporate .invoice-footer > * {
+  position: relative;
+}
+
+.template-corporate .footer-signoff {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  column-gap: 24px;
+}
+
+.template-corporate .footer-signoff h3 {
+  grid-column: 1;
+  grid-row: 1 / 3;
+}
+
+.template-corporate .footer-message,
+.template-corporate .footer-tagline {
+  grid-column: 2;
+}
+
+.template-corporate .footer-message {
+  color: #8be2e8;
+}
+
+.template-corporate .footer-tagline {
+  color: #d9e9f2;
+}
+
+.template-corporate .contact-grid {
+  padding-top: 16px;
+  border-top: 1px solid #55718f;
+}
+
+.template-corporate .contact-grid small {
+  color: #a8dbe3;
+}
+
+.template-corporate .contact-grid strong {
+  color: #ffffff;
+}
+
+/* Porcelain: an inset payment card with a blush title and fine dividers. */
+.template-porcelain .payment-section {
+  padding: 0;
+  border: 0;
+}
+
+.template-porcelain .payment-box {
+  grid-template-columns: minmax(130px, 0.65fr) minmax(0, 1.7fr);
+  gap: 0;
+  border: 1px solid #dfcdd5;
+  border-radius: 18px 0 18px 0;
+  background: #fffaf8;
+  overflow: hidden;
+}
+
+.template-porcelain .payment-box > span {
+  display: grid;
+  align-content: center;
+  padding: 22px;
+  color: var(--accent);
+  background: var(--paper-soft);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.4rem;
+  font-style: italic;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: -0.025em;
+  line-height: 1.35;
+}
+
+.template-porcelain .payment-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 16px 22px;
+  gap: 12px 20px;
+}
+
+.template-porcelain .payment-grid div {
+  gap: 5px;
+  padding: 0;
+}
+
+body:not([data-document-type="quotation"]) .template-porcelain .payment-grid div:first-child {
+  grid-column: 1 / -1;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+body:not([data-document-type="quotation"]) .template-porcelain .payment-grid [data-preset-field="bankName"] {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.15rem;
+  font-weight: 400;
+}
+
+.template-porcelain .payment-grid small {
+  color: var(--accent);
+}
+
+[data-document-type="quotation"] .template-atelier .payment-grid {
+  gap: 16px 0;
+}
+
+[data-document-type="quotation"] .template-atelier .payment-grid div:nth-child(odd) {
+  padding-left: 0;
+  border-left: 0;
+}
+
+[data-document-type="quotation"] .template-atelier .payment-grid strong {
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+[data-document-type="quotation"] .template-signal .payment-grid strong {
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+@media screen and (max-width: 1100px) {
+  .template-signal .invoice-footer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  :is(.template-signal, .template-porcelain) .payment-box {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media screen and (min-width: 641px) and (max-width: 980px) {
+  .template-corporate .invoice-footer {
+    margin: auto -32px -32px;
+    padding: 26px 32px;
+  }
+}
+
+@media screen and (max-width: 640px) {
+  .template-corporate .invoice-footer {
+    margin: auto -22px -22px;
+    padding: 24px 22px;
+  }
+
+  .template-corporate .footer-signoff,
+  .template-signal .invoice-footer,
+  :is(.template-corporate, .template-atelier) .contact-grid,
+  :is(.template-atelier, .template-signal, .template-porcelain) .payment-grid,
+  [data-document-type="quotation"] :is(.template-atelier, .template-signal, .template-porcelain) .payment-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .template-corporate .footer-signoff h3,
+  .template-corporate .footer-message,
+  .template-corporate .footer-tagline {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .template-signal .invoice-footer {
+    padding: 20px;
+  }
+
+  .template-signal .contact-grid div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 5px;
+  }
+
+  .template-atelier .payment-box {
+    padding: 20px;
+  }
+
+  .template-atelier .payment-grid div,
+  [data-document-type="quotation"] .template-atelier .payment-grid div {
+    padding: 12px 0;
+    border: 0;
+    border-bottom: 1px solid #dcc5a3;
+  }
+
+  .template-atelier .payment-grid div:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .template-signal .payment-grid div {
+    padding: 16px 20px;
+    border-left: 0;
+    border-bottom: 1px solid #d7e3ea;
+  }
+}
+
+@media print {
+  :is(.template-corporate, .template-atelier, .template-signal) .invoice-footer {
+    gap: 3mm;
+    padding: 4mm;
+  }
+
+  :is(.template-corporate, .template-atelier, .template-signal) .footer-signoff {
+    gap: 1mm;
+  }
+
+  :is(.template-corporate, .template-atelier, .template-signal) .footer-signoff h3 {
+    font-size: 20pt;
+  }
+
+  :is(.template-corporate, .template-atelier, .template-signal) .footer-message,
+  :is(.template-corporate, .template-atelier, .template-signal) .contact-grid small {
+    font-size: 6pt;
+  }
+
+  :is(.template-corporate, .template-atelier, .template-signal) .footer-tagline,
+  :is(.template-corporate, .template-atelier, .template-signal) .contact-grid strong {
+    font-size: 7.5pt;
+  }
+
+  :is(.template-corporate, .template-atelier) .contact-grid {
+    padding-top: 3mm;
+  }
+
+  :is(.template-corporate, .template-atelier, .template-signal, .template-porcelain) .payment-section {
+    margin-bottom: 5mm;
+  }
+
+  :is(.template-atelier, .template-signal, .template-porcelain) .payment-grid small {
+    font-size: 6.5pt;
+  }
+
+  :is(.template-atelier, .template-signal, .template-porcelain) .payment-grid strong {
+    font-size: 8pt;
+  }
+
+  .template-corporate .invoice-footer {
+    margin: auto -6mm -14mm;
+    padding: 4mm 6mm;
+  }
+
+  .template-atelier .invoice-footer {
+    padding: 4mm 0 0;
+  }
+
+  .template-atelier .payment-box {
+    padding: 4mm;
+    gap: 3mm;
+  }
+
+  .template-atelier .payment-box > span {
+    font-size: 12pt;
+  }
+
+  .template-atelier .payment-grid div {
+    padding: 0 3mm;
+    gap: 2mm;
+  }
+
+  .template-atelier .payment-grid [data-preset-field="bankName"] {
+    font-size: 10pt;
+  }
+
+  .template-signal .payment-box {
+    grid-template-columns: 32mm minmax(0, 1fr);
+  }
+
+  .template-signal .payment-box > span,
+  .template-signal .payment-grid div {
+    padding: 4mm 3mm;
+  }
+
+  .template-signal .contact-grid div {
+    grid-template-columns: 18mm minmax(0, 1fr);
+    gap: 2mm;
+    padding: 2mm 0;
+  }
+
+  .template-porcelain .payment-box > span {
+    padding: 4mm;
+    font-size: 13pt;
+  }
+
+  .template-porcelain .payment-grid {
+    padding: 3mm 4mm;
+    gap: 2mm 4mm;
+  }
+
+  body:not([data-document-type="quotation"]) .template-porcelain .payment-grid div:first-child {
+    padding-bottom: 2mm;
+  }
+
+  body:not([data-document-type="quotation"]) .template-porcelain .payment-grid [data-preset-field="bankName"] {
+    font-size: 10pt;
+  }
+
+  [data-document-type="quotation"] :is(.template-atelier, .template-signal) .payment-grid strong {
+    font-size: 8pt;
+  }
+
+  :is(.template-atelier, .template-signal) .totals-card > div {
+    gap: 3mm;
+  }
+
+  :is(.template-atelier, .template-signal) .totals-card span {
+    min-width: 0;
+    font-size: 7pt;
+    overflow-wrap: anywhere;
+  }
+
+  :is(.template-atelier, .template-signal) .totals-card strong {
+    flex-shrink: 0;
   }
 }
