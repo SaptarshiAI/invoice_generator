@@ -2418,6 +2418,10 @@ body:not([data-document-type="quotation"]) .template-porcelain .payment-grid [da
 .sidebar { max-height: 100vh; overflow-y: auto; }
 .panel-form { display: grid; gap: 10px; min-width: 0; }
 .panel-help { margin: 0; color: var(--muted); font-size: 0.76rem; line-height: 1.5; overflow-wrap: anywhere; }
+.print-feedback { padding: 12px; border: 1px solid #d9a79a; border-radius: 10px; background: #fff3ed; color: #793b2a; }
+.print-feedback p { margin: 0; font-size: 0.8rem; line-height: 1.5; }
+.print-feedback button { margin-top: 10px; }
+.print-feedback:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .checkbox-label { display: flex; gap: 8px; align-items: center; font-size: 0.82rem; }
 .gst-extra summary { cursor: pointer; font-size: 0.8rem; font-weight: 700; }
 .gst-extra .panel-form { margin-top: 12px; }

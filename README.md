@@ -20,6 +20,8 @@ Open `http://127.0.0.1:5173/index.html` for invoices or `/quotation.html` for qu
 
 **Print draft** works without signing in and adds a draft watermark. It does not allocate a number. **New invoice/quotation** starts a fresh document. An issued document is never silently turned into another invoice.
 
+If **Finalize & Print** is blocked, the reason appears directly below the button. **Go to sign-in** takes you to the email form. Open the sign-in link in the same browser profile and site where you are creating the document; the app works in any modern browser, but sign-in sessions are not shared between profiles or between localhost and production.
+
 Numbers look like `WC-A7F3-583721` (invoice) or `WCQ-B4E8-427918` (quotation); these are examples only. The series and initial six-digit value are non-obvious, then numbers advance consecutively. The Indian financial year and actual counter remain private. Previewing the next number does not consume it. Printing again, retrying finalization, or recovering a lost response does not allocate another number.
 
 ## Presets and business details

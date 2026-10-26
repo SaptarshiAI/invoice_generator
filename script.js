@@ -382,7 +382,13 @@ document.getElementById("addItem").addEventListener("click", () => {
 });
 
 document.getElementById("printInvoice").addEventListener("click", finalizeAndPrint);
+document.getElementById('printSignIn').addEventListener('click', () => {
+  const email = document.getElementById('cloudEmail');
+  email.scrollIntoView({ block: 'center' });
+  email.focus({ preventScroll: true });
+});
 document.getElementById('printDraft').addEventListener('click', () => {
+  document.getElementById('printFeedback').hidden = true;
   renderDocumentState();
   document.title = `Draft-${documentType}`;
   window.print();
@@ -642,6 +648,9 @@ async function handleCloudSession() {
   document.getElementById('cloudSignIn').hidden = Boolean(user);
   document.getElementById('cloudSignOut').hidden = !user;
   document.getElementById('cloudWorkspace').hidden = !user;
+  document.getElementById('printAuthHint').hidden = Boolean(user);
+  document.getElementById('printSignIn').hidden = Boolean(user);
+  if (id !== lastCloudUser) document.getElementById('printFeedback').hidden = true;
   document.getElementById('cloudStatus').textContent = cloud.failure || (user ? `Connected as ${user.email}` : 'Sign in to sync presets, save drafts and issue documents.');
   if (id === lastCloudUser) return;
   lastCloudUser = id;
@@ -735,7 +744,7 @@ function renderDocumentState() {
   setDocumentLocked(Boolean(issued || isFinalizing));
   invoicePage.classList.toggle('is-draft', !issued);
   invoicePage.dataset.watermark = isQuotation ? 'DRAFT QUOTATION' : 'DRAFT · NOT A TAX INVOICE';
-  document.getElementById('printInvoice').textContent = issued ? 'Reprint / Save PDF' : 'Finalize & Print';
+  document.getElementById('printInvoice').textContent = isFinalizing ? 'Finalizing…' : issued ? 'Reprint / Save PDF' : 'Finalize & Print';
   const status = document.getElementById('documentStatusSelect');
   if (status) { status.value = currentDocument?.status || 'draft'; status.disabled = !issued; }
   if (issued) {
@@ -747,9 +756,13 @@ function renderDocumentState() {
 
 async function finalizeAndPrint() {
   const button = document.getElementById('printInvoice');
+  const feedback = document.getElementById('printFeedback');
+  feedback.hidden = true;
   button.disabled = true;
+  button.textContent = 'Preparing…';
   try {
-    if (!cloud.user) throw new Error('Sign in to finalize this document. You can use Print draft without signing in.');
+    await cloud.ready;
+    if (!cloud.user) throw new Error(cloud.failure || 'Sign in to finalize this document. You can use Print draft without signing in.');
     if (currentDocument?.id && currentDocument.status === 'draft') {
       const saved = await cloud.document(currentDocument.id);
       if (saved.status !== 'draft') {
@@ -773,6 +786,13 @@ async function finalizeAndPrint() {
     document.title = cleanInvoiceFileName(currentDocument.document_number);
     calculateTotals();
     window.print();
-  } catch (error) { showCloudError(error); }
+  } catch (error) {
+    showCloudError(error);
+    document.getElementById('printFeedbackMessage').textContent = error.message || 'Printing could not start. Please try again.';
+    document.getElementById('printSignIn').hidden = Boolean(cloud.user || cloud.failure);
+    feedback.hidden = false;
+    feedback.scrollIntoView({ block: 'nearest' });
+    feedback.focus({ preventScroll: true });
+  }
   finally { isFinalizing = false; renderDocumentState(); button.disabled = false; }
 }

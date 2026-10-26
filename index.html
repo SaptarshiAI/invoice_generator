@@ -73,6 +73,11 @@
           </div>
           <button class="primary-button" id="addItem" type="button">Add line item</button>
           <button class="secondary-button" id="printInvoice" type="button">Finalize &amp; Print</button>
+          <p class="panel-help" id="printAuthHint">Sign in to assign an invoice number and print the final invoice.</p>
+          <div class="print-feedback" id="printFeedback" tabindex="-1" hidden>
+            <p id="printFeedbackMessage" role="alert"></p>
+            <button class="secondary-button slim-button" id="printSignIn" type="button" hidden>Go to sign-in</button>
+          </div>
           <button class="secondary-button" id="printDraft" type="button">Print draft</button>
           <button class="secondary-button" id="newInvoice" type="button">New invoice</button>
         </section>

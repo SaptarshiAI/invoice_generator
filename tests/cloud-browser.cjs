@@ -10,7 +10,7 @@ const adapter = `(() => {
   const copy = value => JSON.parse(JSON.stringify(value));
   window.__cloudTest = { read, write };
   window.invoiceCloud = {
-    ready: Promise.resolve(), user: {id:'test-owner', email:'wizardcogofficial@gmail.com'}, failure:'',
+    ready: Promise.resolve(), get user() { return read().signedOut ? null : {id:'test-owner', email:'wizardcogofficial@gmail.com'}; }, failure:'',
     subscribe() {}, async businessSettings() { return null; },
     async presets() { return Object.entries(read().presets).map(([name,snapshot]) => ({name,snapshot})); },
     async documents() {
@@ -56,6 +56,14 @@ const adapter = `(() => {
       await page.addInitScript(()=>{window.__prints=0;window.print=()=>{window.__prints++;};});
       const open=async()=>{await page.goto(base+'/'+(type==='invoice'?'index':'quotation')+'.html');await page.locator('#nextCloudNumber').filter({hasText:'583721'}).waitFor();};
       await open();
+      if(type==='invoice') {
+        await page.click('#printInvoice');
+        await page.locator('#printFeedbackMessage').filter({hasText:'Enter the client’s GSTIN'}).waitFor();
+        assert.equal(await page.locator('#printFeedback').isVisible(),true);
+        assert.equal(await page.locator('#printSignIn').isVisible(),false);
+        assert.equal(await page.evaluate(()=>document.activeElement.id),'printFeedback');
+        assert.deepEqual(await page.evaluate(()=>({prints:window.__prints,finalizes:window.__cloudTest.read().finalizes})),{prints:0,finalizes:0});
+      }
       await page.selectOption('#recipientTypeSelect','unregistered');
       await page.locator('[data-preset-field="clientName"]').fill('Workflow test client');
       await page.click('#saveDraft');
@@ -118,8 +126,25 @@ const adapter = `(() => {
       assert.equal(afterRetry.saves,beforeRetry.saves);
       assert.equal(await page.locator('[data-preset-field="issueDate"]').first().textContent(),'May 1, 2026');
       assert.match(await page.locator('#nextCloudNumber').textContent(),new RegExp(String(afterRetry.next)));
+      // A signed-out final print explains the blocker at the clicked button.
+      await page.evaluate(()=>{const state=window.__cloudTest.read();state.signedOut=true;window.__cloudTest.write(state);});
+      await page.reload();
+      await page.locator('#cloudSignIn').waitFor({state:'visible'});
+      await page.click('#printInvoice');
+      await page.locator('#printFeedbackMessage').filter({hasText:'Sign in to finalize'}).waitFor();
+      assert.equal(await page.locator('#printSignIn').isVisible(),true);
+      const feedbackBounds=await page.locator('#printFeedback').boundingBox();
+      assert.ok(feedbackBounds.y>=0 && feedbackBounds.y+feedbackBounds.height<=page.viewportSize().height+1,'Print error should be visible beside the print controls');
+      assert.equal(await page.evaluate(()=>window.__prints),0);
+      assert.equal(await page.evaluate(()=>window.__cloudTest.read().next),afterRetry.next);
+      await page.click('#printSignIn');
+      assert.equal(await page.evaluate(()=>document.activeElement.id),'cloudEmail');
+      await page.click('#printDraft');
+      assert.equal(await page.evaluate(()=>window.__prints),1);
+      assert.equal(await page.locator('#printFeedback').isVisible(),false);
+      assert.equal(await page.evaluate(()=>window.__cloudTest.read().next),afterRetry.next);
       assert.deepEqual(errors,[]);
-      console.log(type+': draft persistence, finalize once, immutable issued records, copies, presets, sanitization, refresh failure and lost-response recovery passed');
+      console.log(type+': print blockers, sign-in shortcut, draft printing, finalize once, immutable records, presets and lost-response recovery passed');
       await context.close();
     }
   } finally {await browser.close();}
