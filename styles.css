@@ -2412,3 +2412,124 @@ body:not([data-document-type="quotation"]) .template-porcelain .payment-grid [da
     flex-shrink: 0;
   }
 }
+
+/* GST particulars and cloud controls shared by every document design. */
+[hidden] { display: none !important; }
+.sidebar { max-height: 100vh; overflow-y: auto; }
+.panel-form { display: grid; gap: 10px; min-width: 0; }
+.panel-help { margin: 0; color: var(--muted); font-size: 0.76rem; line-height: 1.5; overflow-wrap: anywhere; }
+.checkbox-label { display: flex; gap: 8px; align-items: center; font-size: 0.82rem; }
+.gst-extra summary { cursor: pointer; font-size: 0.8rem; font-weight: 700; }
+.gst-extra .panel-form { margin-top: 12px; }
+button:disabled, select:disabled { cursor: default; opacity: 0.55; }
+[contenteditable][data-placeholder]:empty::before { content: attr(data-placeholder); color: var(--muted); font-weight: 400; }
+.meta-card .party-tax { display: flex; flex-wrap: wrap; gap: 4px 8px; margin: 3px 0 0; }
+.meta-card .party-tax span { font-size: 0.62rem; }
+.meta-card .party-tax strong { font-size: 0.78rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.meta-card .party-state { margin: 0; font-size: 0.72rem; color: var(--muted); }
+.supply-details { display: grid; grid-template-columns: 1.2fr 0.75fr 1.2fr; gap: 16px; padding: 12px 0; margin: 0 0 24px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.supply-details > div { display: grid; gap: 5px; min-width: 0; }
+.supply-details span, .delivery-details > span, .einvoice-details span { color: var(--muted); font-size: 0.6rem; font-weight: 750; text-transform: uppercase; letter-spacing: 0.08em; }
+.supply-details strong { font-size: 0.74rem; line-height: 1.5; }
+.item-description { min-width: 0; }
+.item-classification { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; color: var(--muted); font-size: 0.64rem; font-weight: 400; }
+.item-gst-rate { margin-left: 10px; }
+.totals-card .tax-component { padding-top: 8px; padding-bottom: 8px; background: var(--paper-soft); }
+.totals-card .tax-component span { font-size: 0.66rem; }
+.totals-card .tax-component strong { font-size: 0.85rem; }
+.invoice-signing { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 28px; align-items: end; margin: 0 0 28px; }
+.delivery-details p { margin: 6px 0; font-size: 0.8rem; line-height: 1.5; }
+.delivery-details small { display: block; max-width: 480px; font-size: 0.68rem; line-height: 1.5; color: var(--muted); }
+.signature-block { display: grid; gap: 5px; text-align: center; font-size: 0.73rem; }
+.signature-block small { color: var(--muted); font-size: 0.65rem; }
+.signature-line { border-bottom: 1px solid var(--line); }
+.signature-image { height: 48px; }
+.signature-image img { width: 100%; height: 100%; object-fit: contain; }
+.signature-image.is-empty { height: 30px; }
+.signature-block [data-preset-field="signatoryName"]:empty { display: none; }
+.einvoice-details { display: grid; grid-template-columns: minmax(0, 1fr) 90px; gap: 20px; padding: 14px; margin-bottom: 22px; border: 1px solid var(--line); }
+.einvoice-details strong { display: inline-block; font-size: 0.75rem; overflow-wrap: anywhere; }
+.einvoice-details > div > strong { display: block; margin-top: 5px; }
+.einvoice-details p { margin: 8px 0 0; }
+.irn-qr img { display: block; width: 90px; height: 90px; object-fit: contain; }
+.invoice-page.is-draft::after { content: attr(data-watermark); position: absolute; top: 45%; left: 0; width: 100%; padding: 0 30px; text-align: center; color: var(--accent); opacity: 0.07; font-size: 2.4rem; font-weight: 800; transform: rotate(-30deg); pointer-events: none; z-index: 0; }
+.template-corporate .invoice-title p { font-size: 3.1rem; }
+
+@media screen and (max-width: 980px) {
+  .sidebar { max-height: none; overflow-y: visible; }
+}
+@media screen and (max-width: 640px) {
+  .supply-details, .invoice-signing { grid-template-columns: minmax(0, 1fr); }
+  .signature-block { width: min(100%, 230px); margin-left: auto; }
+  .einvoice-details { grid-template-columns: minmax(0, 1fr); }
+  .meta-card .party-tax strong { font-size: 0.72rem; }
+}
+@media print {
+  .invoice-title p, .template-corporate .invoice-title p { font-size: 25pt; }
+  .invoice-meta, .template-corporate .invoice-meta, .template-porcelain .invoice-meta { margin: 3mm 0; gap: 3mm; }
+  .meta-card strong { font-size: 9pt; }
+  .meta-card p { font-size: 8pt; line-height: 1.35; }
+  .meta-card span, .meta-card .party-tax span { font-size: 6pt; }
+  .meta-card .party-tax strong { font-size: 7.5pt; }
+  .meta-card .party-state { font-size: 7pt; }
+  .supply-details { gap: 3mm; padding: 2mm 0; margin-bottom: 3mm; break-inside: avoid; }
+  .supply-details span, .delivery-details > span { font-size: 6pt; }
+  .supply-details strong { font-size: 7pt; }
+  .item-classification { margin-top: 1mm; font-size: 6pt; }
+  .table-head { padding: 2mm 3mm; }
+  .line-item, .template-porcelain .line-item { min-height: 0; padding: 2mm 3mm; }
+  .invoice-summary { margin-top: 3mm; gap: 3mm; }
+  .totals-card > div { padding: 2mm 3mm; }
+  .totals-card .tax-component { padding: 1.3mm 3mm; }
+  .totals-card .tax-component span { font-size: 6.5pt; }
+  .totals-card .tax-component strong { font-size: 8pt; }
+  .invoice-signing { grid-template-columns: minmax(0, 1fr) 48mm; margin-bottom: 4mm; gap: 5mm; break-inside: avoid; }
+  .delivery-details p { margin: 1mm 0; font-size: 7pt; }
+  .delivery-details small { font-size: 6.5pt; }
+  .signature-block { gap: 1mm; font-size: 7pt; }
+  .signature-block small { font-size: 6pt; }
+  .signature-image { height: 9mm; }
+  .signature-image.is-empty { height: 5mm; }
+  .einvoice-details { grid-template-columns: minmax(0, 1fr) 23mm; padding: 3mm; margin-bottom: 3mm; break-inside: avoid; }
+  .irn-qr img { width: 23mm; height: 23mm; }
+}
+
+@media print {
+  .invoice-page { display: block; }
+  .gst-total-row { display: none !important; }
+  .template-corporate .invoice-info-card span,
+  .template-corporate .invoice-info-card strong { font-size: 8pt; }
+  .template-corporate .invoice-info-card div { grid-template-columns: 25mm minmax(0, 1fr); gap: 2mm; padding: 1.3mm 0; }
+  .template-corporate .invoice-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .template-corporate .meta-card.compact { display: none; }
+  .template-porcelain .invoice-hero { gap: 3mm; padding-bottom: 3mm; }
+  .template-porcelain .invoice-title { padding-top: 3mm; gap: 3mm; }
+  .template-porcelain .brand-contact { margin-top: 2mm; }
+  .template-porcelain .logo-box { width: 16mm; height: 16mm; }
+  .template-porcelain .brand-block h2 { font-size: 22pt; }
+  .template-porcelain .invoice-title p { font-size: 29pt; }
+  .template-porcelain .totals-card > div { padding: 2mm 3mm; }
+  :is(.template-corporate, .template-atelier, .template-signal, .template-porcelain) .invoice-footer { padding-top: 3mm; padding-bottom: 3mm; gap: 2mm; }
+  :is(.template-corporate, .template-atelier, .template-signal, .template-porcelain) .footer-signoff h3 { font-size: 20pt; }
+  .template-porcelain .contact-grid div { padding: 1.4mm 0; }
+  .template-porcelain .payment-box > span { padding: 3mm; }
+  .template-porcelain .payment-grid { padding: 2.5mm 3mm; gap: 1.5mm 3mm; }
+  [data-document-type="quotation"] .template-atelier .payment-grid { gap: 3mm 0; }
+  .invoice-signing { margin-bottom: 3mm; }
+}
+
+@media print {
+  [data-document-type="quotation"] .template-corporate .payment-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: none;
+    gap: 2mm 5mm;
+  }
+  [data-document-type="quotation"] .template-corporate .payment-grid div {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    gap: 1mm;
+    padding: 2mm 0;
+  }
+  [data-document-type="quotation"] .template-corporate .payment-grid small { font-size: 6.5pt; }
+  [data-document-type="quotation"] .template-corporate .payment-grid strong { font-size: 8pt; }
+}

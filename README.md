@@ -1,103 +1,58 @@
-# Invoice & Quotation Generator
+# WizardCog Invoice Studio
 
-A fully editable browser-based invoice and quotation template generator for creating consistent client documents.
+A static invoice and quotation editor with four printable designs and a private Supabase workspace. Porcelain is the default; Corporate Teal, Atelier and Signal remain available.
 
-## Open Locally
-
-This is a static HTML/CSS/JavaScript app. No install step is required.
-
-From the project folder, run:
+## Run locally
 
 ```bash
-python3 -m http.server 5173
+python3 -m http.server 5173 --bind 127.0.0.1
 ```
 
-Then open this URL in your browser:
+Open `http://127.0.0.1:5173/index.html` for invoices or `/quotation.html` for quotations. Use port 5173 for the configured local sign-in redirects. Production is `https://invoice.wizardcog.com`.
 
-```text
-http://127.0.0.1:5173/index.html
-```
+## Save and issue documents
 
-## If You Are Not In The Project Folder
+1. Select **Send sign-in link** for `wizardcogofficial@gmail.com` and open the emailed link in the same browser profile and site origin.
+2. Enter the actual client name, address and GSTIN. Select **Unregistered (URP)** only for an unregistered client. Check the place of supply and each service's SAC.
+3. **Save draft** stores the document in Supabase without assigning an invoice number. Unsaved edits exist only in the current tab.
+4. **Finalize & Print** validates the details, saves the draft and issues it through a database transaction. The database assigns the number, issue date and due date (15 days later). Finalization locks the issued contents.
+5. Open an entry under **Saved invoices/quotations** to resume a draft or reprint an issued document. Reprints retain the original number and dates. An invoice can be printed as Original for Recipient or Duplicate for Supplier. Status can be updated to paid/cancelled without rewriting the invoice.
 
-Run:
+**Print draft** works without signing in and adds a draft watermark. It does not allocate a number. **New invoice/quotation** starts a fresh document. An issued document is never silently turned into another invoice.
+
+Numbers look like `WC-A7F3-583721` (invoice) or `WCQ-B4E8-427918` (quotation); these are examples only. The series and initial six-digit value are non-obvious, then numbers advance consecutively. The Indian financial year and actual counter remain private. Previewing the next number does not consume it. Printing again, retrying finalization, or recovering a lost response does not allocate another number.
+
+## Presets and business details
+
+While signed in, **Save** in Client Preset stores a named snapshot in Supabase. Loading a preset creates a fresh draft, even if the preset contains an old document number. Invoice and quotation presets are separate. **Save business details** stores common legal name, address, GSTIN, branding and contact defaults for both pages. Client and payment details are retained in document/preset snapshots.
+
+When signed out, preset saving remains available in this browser's `localStorage`:
+
+- `invoice-studio-presets`
+- `quotation-studio-presets`
+
+Existing browser presets are not deleted or automatically uploaded. After signing in, select **Import browser presets** separately on each page. Import works only in the browser profile and exact origin where the old presets exist. Existing cloud names are preserved on import. Historical PDFs/numbers are not imported or renumbered automatically. Old local sequence keys are no longer used.
+
+Cloud records are restricted by both an approved-email allowlist and owner-based row-level security. Signing into localhost does not sign you into the production site's separate browser storage. See [database setup](supabase/README.md) for migrations, authentication and the Free plan limits.
+
+## GST scope
+
+Every design includes WIZARDCOG's supplied GSTIN `19AAFFW5069E1ZV`, an editable client GSTIN/UIN, SAC per service, place of supply, reverse-charge indication, tax breakup, service/delivery address and an authorised-signatory area. Quotations are explicitly identified as quotations rather than tax invoices.
+
+The supported tax model is taxable domestic IT services at 18%: 9% CGST + 9% SGST/UTGST for an intra-state supply, or 18% IGST for an inter-state supply. Both browser previews and database finalization calculate GST; the server does not trust submitted totals. The rate follows CBIC's [IT/ITES FAQ](https://cbic-gst.gov.in/hindi/sectoral-faq.html). Review [GST coverage and remaining conditions](docs/gst-invoice-review.md) before using a different supply/tax treatment.
+
+## Verification
 
 ```bash
-cd "/Users/saptarshimandal/Projects/Apps/Invoice Generation"
-python3 -m http.server 5173
+node --test tests/gst.test.cjs
+node --check script.js
+node --check cloud.js
 ```
 
-Then open:
-
-```text
-http://127.0.0.1:5173/index.html
-```
-
-## If Port 5173 Is Busy
-
-Use another port, for example:
+With Playwright installed and the local server running:
 
 ```bash
-python3 -m http.server 4173
+node tests/cloud-browser.cjs
 ```
 
-Then open:
-
-```text
-http://127.0.0.1:4173/index.html
-```
-
-## Stop The Local Server
-
-In the terminal where the server is running, press:
-
-```text
-Control + C
-```
-
-## Notes
-
-- Click any invoice text to edit it.
-- Use `Print / Save PDF` to generate a printable invoice.
-- The invoice date updates automatically when printing.
-- The due date is set to 15 days after the invoice date.
-- The Save as PDF filename should use the invoice number as the browser's suggested filename.
-- Both invoices and quotations automatically calculate **GST (18%)** from the line-item subtotal. Editing quantities or rates, adding or removing items, and loading a preset recalculates GST and the grand total. GST is calculated rather than manually editable, and monetary values are rounded to paise.
-
-The 18% rate is intended for taxable domestic IT services such as ERPNext implementation, customization, and support. CBIC's [IT/ITES FAQ](https://cbic-gst.gov.in/hindi/sectoral-faq.html) lists IT services at 18%; qualifying exports/SEZ supplies can have different treatment.
-
-## Quotations
-
-Open `http://127.0.0.1:5173/quotation.html`, or select **Quotation** in the sidebar.
-The quotation uses the same four designs, editable items, branding, totals, and PDF printing as the invoice.
-It includes a validity date, draft status, payment terms, and quotation total.
-Quotation presets and numbering are stored separately from invoices; quotation numbers use `WC-Q-YYYY-0001`.
-Printing updates the quotation date to today and its validity to 15 days later, and suggests the quotation number as the PDF filename.
-
-## Designs
-
-Choose a design from the **Template** dropdown on the invoice or quotation page:
-
-Porcelain is the default on both pages and when resetting the design or starting a new document.
-
-- **Corporate Teal** — navy and teal with an executive layout.
-- **Atelier** — warm paper tones and premium serif branding.
-- **Signal** — a bold, modern layout with slate and mint accents.
-- **Porcelain** — plum serif headings, blush panels, fine rules, and a spacious editorial layout.
-
-Each design has its own closing details: Corporate Teal uses an angled navy-and-teal footer, Atelier pairs a gold-ruled studio footer with a warm bank folio, Signal uses slate-and-mint contact and payment panels, and Porcelain pairs its curved blush signature panel with a serif payment card. Quotation payment terms use the same design treatments. Footer branding, the closing message, contact details, and payment fields remain editable and save with client presets.
-
-All designs use the common WizardCog logo, business address, contact details, and existing document fields, and support client presets, mobile screens, and A4 PDF printing. Saved presets using a removed design load with Porcelain while preserving the preset's document data.
-
-## Where Client Presets Are Saved
-
-There is no database or backend. Clicking **Save** stores the document snapshot in the browser's `localStorage` as JSON:
-
-- Invoice presets: `invoice-studio-presets`
-- Quotation presets: `quotation-studio-presets`
-
-Each preset includes the template, editable document fields, line items, logo, and optional cover image. GST is recalculated at 18% when loading a preset, including older presets that contain a manually entered tax amount. Saving under the same name replaces that preset. Unsaved edits are not automatically persisted.
-
-Storage belongs to the current browser profile and exact site origin (protocol, hostname, and port). For example, `http://127.0.0.1:5173` and `http://localhost:5173` have separate storage, as do different ports. Presets survive normal reloads and browser restarts but do not sync across browsers or devices. Clearing site data deletes them; private browsing storage is temporary.
-
-To inspect the saved JSON, open browser developer tools, then **Application / Storage → Local Storage → the current origin**. Invoice and quotation numbering are also stored locally under their respective `*-studio-wizardcog-sequence` keys.
+Browser workflow tests use a fake cloud adapter in an isolated browser and never issue real invoices. Database tests in [supabase/tests/database.sql](supabase/tests/database.sql) exercise the actual RLS/functions inside a transaction that rolls back all fixtures. The eight default design/document combinations were rendered and checked as single-page A4 PDFs, with responsive checks at 375, 768 and 1024 pixels. Longer documents may span pages.

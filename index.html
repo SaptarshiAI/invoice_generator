@@ -72,7 +72,8 @@
             <span>Invoice Tools</span>
           </div>
           <button class="primary-button" id="addItem" type="button">Add line item</button>
-          <button class="secondary-button" id="printInvoice" type="button">Print / Save PDF</button>
+          <button class="secondary-button" id="printInvoice" type="button">Finalize &amp; Print</button>
+          <button class="secondary-button" id="printDraft" type="button">Print draft</button>
           <button class="secondary-button" id="newInvoice" type="button">New invoice</button>
         </section>
       </aside>
@@ -104,24 +105,24 @@
               </div>
             </div>
             <div class="invoice-title">
-              <p contenteditable="true" data-preset-field="invoiceType">Invoice</p>
-              <strong contenteditable="true" data-preset-field="invoiceNumber">#WC-2026-014</strong>
+              <p contenteditable="true" data-preset-field="invoiceType">Tax Invoice</p>
+              <strong data-preset-field="invoiceNumber">DRAFT</strong>
               <div class="invoice-info-card">
                 <div>
                   <span>Invoice No.</span>
-                  <strong contenteditable="true" data-preset-field="invoiceNumber">#WC-2026-014</strong>
+                  <strong data-preset-field="invoiceNumber">DRAFT</strong>
                 </div>
                 <div>
                   <span>Invoice Date</span>
-                  <strong contenteditable="true" data-preset-field="issueDate">July 1, 2026</strong>
+                  <strong data-preset-field="issueDate">July 1, 2026</strong>
                 </div>
                 <div>
                   <span>Due Date</span>
-                  <strong contenteditable="true" data-preset-field="dueDate">July 15, 2026</strong>
+                  <strong data-preset-field="dueDate">July 15, 2026</strong>
                 </div>
                 <div>
                   <span>Status</span>
-                  <strong contenteditable="true" data-preset-field="invoiceStatus">Unpaid</strong>
+                  <strong data-preset-field="invoiceStatus">Draft</strong>
                 </div>
               </div>
             </div>
@@ -136,18 +137,28 @@
               <span>Bill To</span>
               <strong contenteditable="true" data-preset-field="clientName">Acme Labs Pvt Ltd</strong>
               <p contenteditable="true" data-preset-field="clientAddress">91 Springboard, Sector V, Kolkata<br />West Bengal 700091</p>
+              <p class="party-tax"><span>GSTIN / UIN</span><strong contenteditable="true" data-preset-field="clientGstin" data-placeholder="Enter GSTIN or URP"></strong></p>
+              <p class="party-state" contenteditable="true" data-preset-field="clientState">West Bengal (19)</p>
             </div>
             <div class="meta-card">
               <span>From</span>
-              <strong contenteditable="true" data-preset-field="senderName">WizardCog</strong>
+              <strong contenteditable="true" data-preset-field="senderName">WIZARDCOG</strong>
               <p contenteditable="true" data-preset-field="senderAddress">Om Residency, Block - 1, Flat - 7A, 83A, Cossipore Road, Kolkata - 700002</p>
+              <p class="party-tax"><span>GSTIN</span><strong contenteditable="true" data-preset-field="supplierGstin">19AAFFW5069E1ZV</strong></p>
+              <p class="party-state" data-preset-field="supplierState">West Bengal (19)</p>
             </div>
             <div class="meta-card compact">
               <span>Issued</span>
-              <strong contenteditable="true" data-preset-field="issueDate">July 1, 2026</strong>
+              <strong data-preset-field="issueDate">July 1, 2026</strong>
               <span>Due</span>
-              <strong contenteditable="true" data-preset-field="dueDate">July 15, 2026</strong>
+              <strong data-preset-field="dueDate">July 15, 2026</strong>
             </div>
+          </section>
+
+          <section class="supply-details" aria-label="GST supply details">
+            <div><span>Place of supply</span><strong id="placeOfSupply">West Bengal (19)</strong></div>
+            <div><span>Reverse charge</span><strong id="reverseChargeText">No</strong></div>
+            <div><span>Document copy</span><strong data-preset-field="copyType">Original for Recipient</strong></div>
           </section>
 
           <section class="invoice-table" aria-label="Invoice line items">
@@ -159,21 +170,21 @@
             </div>
             <div class="line-items" id="lineItems">
               <div class="line-item">
-                <div contenteditable="true">AI workflow automation</div>
+                <div class="item-description"><div contenteditable="true" data-item-description>AI workflow automation</div><small class="item-classification">SAC <span contenteditable="true" data-item-sac>998314</span><span class="item-gst-rate">GST 18%</span></small></div>
                 <div contenteditable="true" data-number="qty">1</div>
                 <div contenteditable="true" data-number="rate">85000</div>
                 <div class="line-total">₹85,000</div>
                 <button class="remove-line" type="button" aria-label="Remove line item">&times;</button>
               </div>
               <div class="line-item">
-                <div contenteditable="true">Website integration setup</div>
+                <div class="item-description"><div contenteditable="true" data-item-description>Website integration setup</div><small class="item-classification">SAC <span contenteditable="true" data-item-sac>998314</span><span class="item-gst-rate">GST 18%</span></small></div>
                 <div contenteditable="true" data-number="qty">1</div>
                 <div contenteditable="true" data-number="rate">25000</div>
                 <div class="line-total">₹25,000</div>
                 <button class="remove-line" type="button" aria-label="Remove line item">&times;</button>
               </div>
               <div class="line-item">
-                <div contenteditable="true">Monthly support</div>
+                <div class="item-description"><div contenteditable="true" data-item-description>Monthly support</div><small class="item-classification">SAC <span contenteditable="true" data-item-sac>998313</span><span class="item-gst-rate">GST 18%</span></small></div>
                 <div contenteditable="true" data-number="qty">2</div>
                 <div contenteditable="true" data-number="rate">12000</div>
                 <div class="line-total">₹24,000</div>
@@ -189,13 +200,16 @@
             </div>
             <div class="totals-card">
               <div>
-                <span>Subtotal</span>
+                <span>Taxable value</span>
                 <strong id="subtotal">₹134,000</strong>
               </div>
-              <div>
+              <div class="gst-total-row">
                 <span>GST (18%)</span>
                 <strong id="taxAmount">₹24,120</strong>
               </div>
+              <div class="tax-component" id="cgstRow"><span>CGST (9%)</span><strong id="cgstAmount">₹12,060</strong></div>
+              <div class="tax-component" id="sgstRow"><span>SGST (9%)</span><strong id="sgstAmount">₹12,060</strong></div>
+              <div class="tax-component" id="igstRow" hidden><span>IGST (18%)</span><strong id="igstAmount">₹24,120</strong></div>
               <div class="grand-total">
                 <span>Total Due</span>
                 <strong id="grandTotal">₹158,120</strong>
@@ -221,6 +235,11 @@
                 </div>
               </div>
             </div>
+          </section>
+
+          <section class="invoice-signing" aria-label="Delivery and authorisation">
+            <div class="delivery-details"><span>Delivery / service address</span><p contenteditable="true" data-preset-field="deliveryAddress">Same as billing address</p><small id="gstPaymentNote">GST is payable by the supplier.</small></div>
+            <div class="signature-block"><span>For <strong data-preset-field="senderName">WIZARDCOG</strong></span><div class="signature-image is-empty" id="signatureImage"></div><span class="signature-line"></span><strong contenteditable="true" data-preset-field="signatoryName" data-placeholder="Authorised signatory"></strong><small>Authorised signatory</small></div>
           </section>
 
           <footer class="invoice-footer">
@@ -251,6 +270,9 @@
       </main>
     </div>
 
+    <script src="gst.js"></script>
+    <script src="cloud-config.js"></script>
+    <script src="cloud.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

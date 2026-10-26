@@ -14,14 +14,19 @@ const presetSelect = document.getElementById("presetSelect");
 
 const defaultDocumentTitle = document.title;
 const defaultTemplate = "porcelain";
-const gstRate = 0.18;
 const isQuotation = document.body.dataset.documentType === "quotation";
 const documentType = isQuotation ? "quotation" : "invoice";
-const documentNumberPrefix = isQuotation ? "WC-Q" : "WC";
 const storageKey = `${documentType}-studio-presets`;
-const invoiceSequenceKey = `${documentType}-studio-wizardcog-sequence`;
 const wizardCogLogo = "assets/wizardcoglogo-transparent-cropped.png";
-let invoiceNumberManuallyEdited = false;
+const cloud = window.invoiceCloud;
+let currentDocument = null;
+let cloudPresets = null;
+let lastCloudUser = null;
+let documentDirty = false;
+let placeOfSupplyTouched = false;
+let totalsBreakdown;
+let isFinalizing = false;
+let draftSave = null;
 const templateClasses = [
   "template-corporate",
   "template-atelier",
@@ -32,10 +37,17 @@ const wizardCogDefaults = {
   brandLabel: "ERP That Works Like Magic",
   brandName: "WizardCog",
   footerMessage: "Let's build what's next.",
-  invoiceType: isQuotation ? "Quotation" : "Invoice",
-  invoiceNumber: isQuotation ? "#WC-Q-2026-0001" : "#WC-2026-014",
-  invoiceStatus: isQuotation ? "Draft" : "Unpaid",
-  senderName: "WizardCog",
+  invoiceType: isQuotation ? "Quotation" : "Tax Invoice",
+  invoiceNumber: "DRAFT",
+  invoiceStatus: "Draft",
+  senderName: "WIZARDCOG",
+  supplierGstin: "19AAFFW5069E1ZV",
+  supplierState: "West Bengal (19)",
+  clientGstin: "",
+  clientState: "West Bengal (19)",
+  copyType: isQuotation ? "Quotation — not a tax invoice" : "Original for Recipient",
+  deliveryAddress: "Same as billing address",
+  signatoryName: "",
   senderAddress: "Om Residency, Block - 1, Flat - 7A, 83A, Cossipore Road, Kolkata - 700002",
   notes: isQuotation
     ? "Thank you for considering WizardCog. This quotation is valid for 15 days from the issue date. Please contact us to confirm acceptance."
@@ -64,10 +76,6 @@ function formatCurrency(value) {
   return currency.format(value);
 }
 
-function currentInvoiceYear() {
-  return new Date().getFullYear();
-}
-
 function addDays(date, days) {
   const nextDate = new Date(date);
   nextDate.setDate(nextDate.getDate() + days);
@@ -91,43 +99,6 @@ function setInvoiceDates(issueDate = new Date()) {
   setPresetField("dueDate", formatInvoiceDate(addDays(issueDate, 15)));
 }
 
-function buildInvoiceNumber(year, sequence) {
-  return `#${documentNumberPrefix}-${year}-${String(sequence).padStart(4, "0")}`;
-}
-
-function getInvoiceSequence() {
-  const fallback = { year: currentInvoiceYear(), next: 1 };
-  try {
-    const stored = JSON.parse(localStorage.getItem(invoiceSequenceKey));
-    if (!stored || stored.year !== fallback.year || !Number.isFinite(Number(stored.next))) {
-      return fallback;
-    }
-    return { year: stored.year, next: Math.max(1, Number(stored.next)) };
-  } catch {
-    return fallback;
-  }
-}
-
-function peekNextInvoiceNumber() {
-  const sequence = getInvoiceSequence();
-  return buildInvoiceNumber(sequence.year, sequence.next);
-}
-
-function claimNextInvoiceNumber() {
-  const sequence = getInvoiceSequence();
-  const invoiceNumber = buildInvoiceNumber(sequence.year, sequence.next);
-  try {
-    localStorage.setItem(
-      invoiceSequenceKey,
-      JSON.stringify({ year: sequence.year, next: sequence.next + 1 }),
-    );
-  } catch {
-    // If storage is unavailable, the timestamp keeps printed invoice numbers distinct.
-    return `#${documentNumberPrefix}-${sequence.year}-${Date.now()}`;
-  }
-  return invoiceNumber;
-}
-
 function setStatus(message) {
   saveStatus.textContent = message;
   window.clearTimeout(setStatus.timer);
@@ -142,15 +113,32 @@ function calculateTotals() {
   lineItems.querySelectorAll(".line-item").forEach((row) => {
     const qty = cleanNumber(row.querySelector('[data-number="qty"]').textContent);
     const rate = cleanNumber(row.querySelector('[data-number="rate"]').textContent);
-    const lineTotalPaise = Math.round(qty * rate * 100);
+    const lineTotalPaise = InvoiceGST.lineTotalPaise(qty, rate);
     row.querySelector(".line-total").textContent = formatCurrency(lineTotalPaise / 100);
     subtotalPaise += lineTotalPaise;
   });
 
-  const taxPaise = Math.round(subtotalPaise * gstRate);
+  const supplierGstin = getPresetFieldText('supplierGstin').toUpperCase();
+  const supplierState = supplierGstin.slice(0, 2) || '19';
+  const supplyState = document.getElementById('placeOfSupplySelect')?.value || '19';
+  const reverseCharge = document.getElementById('reverseChargeSelect')?.value === 'yes';
+  totalsBreakdown = InvoiceGST.breakdown(subtotalPaise, supplierState, supplyState, reverseCharge);
   subtotal.textContent = formatCurrency(subtotalPaise / 100);
-  taxAmount.textContent = formatCurrency(taxPaise / 100);
-  grandTotal.textContent = formatCurrency((subtotalPaise + taxPaise) / 100);
+  taxAmount.textContent = formatCurrency(totalsBreakdown.gstPaise / 100);
+  grandTotal.textContent = formatCurrency(totalsBreakdown.totalPaise / 100);
+  document.getElementById('cgstAmount').textContent = formatCurrency(totalsBreakdown.cgstPaise / 100);
+  document.getElementById('sgstAmount').textContent = formatCurrency(totalsBreakdown.sgstPaise / 100);
+  document.getElementById('igstAmount').textContent = formatCurrency(totalsBreakdown.igstPaise / 100);
+  document.getElementById('cgstRow').hidden = totalsBreakdown.interstate;
+  document.getElementById('sgstRow').hidden = totalsBreakdown.interstate;
+  document.getElementById('igstRow').hidden = !totalsBreakdown.interstate;
+  document.getElementById('sgstRow').querySelector('span').textContent = ['04', '26', '31', '35', '38', '97'].includes(supplierState) ? 'UTGST (9%)' : 'SGST (9%)';
+  document.getElementById('placeOfSupply').textContent = InvoiceGST.stateLabel(supplyState);
+  document.getElementById('reverseChargeText').textContent = reverseCharge ? 'Yes' : 'No';
+  document.getElementById('gstPaymentNote').textContent = reverseCharge
+    ? 'GST shown above is payable by the recipient under reverse charge and is excluded from the amount due.'
+    : 'GST is payable by the supplier.';
+  setPresetField('supplierState', InvoiceGST.stateLabel(supplierState));
 }
 
 function readFileAsDataUrl(file, callback) {
@@ -188,8 +176,19 @@ function clearCoverImage() {
 
 function setPresetField(name, value) {
   invoicePage.querySelectorAll(`[data-preset-field="${name}"]`).forEach((field) => {
-    field.innerHTML = value;
+    field.innerHTML = sanitizeEditableHtml(value);
   });
+}
+
+function sanitizeEditableHtml(value) {
+  const template = document.createElement('template');
+  template.innerHTML = String(value ?? '');
+  const allowed = new Set(['BR', 'DIV', 'P', 'B', 'STRONG', 'I', 'EM', 'U', 'SPAN']);
+  template.content.querySelectorAll('*').forEach(element => {
+    if (!allowed.has(element.tagName)) element.replaceWith(document.createTextNode(element.textContent));
+    else [...element.attributes].forEach(attribute => element.removeAttribute(attribute.name));
+  });
+  return template.innerHTML;
 }
 
 function getPresetFieldText(name) {
@@ -198,29 +197,37 @@ function getPresetFieldText(name) {
 
 function applyWizardCogDefaults() {
   Object.entries(wizardCogDefaults).forEach(([key, value]) => setPresetField(key, value));
-  setPresetField("invoiceNumber", peekNextInvoiceNumber());
-  invoiceNumberManuallyEdited = false;
+  setPresetField("invoiceNumber", "DRAFT");
   setInvoiceDates();
   presetName.value = `${templateSelect.selectedOptions[0].textContent.split(" - ")[0]} Default`;
   setLogo(wizardCogLogo);
   clearCoverImage();
 }
 
-function addLineItem(description = "New service", qty = "1", rate = "0") {
+function addLineItem(description = "New service", qty = "1", rate = "0", sac = "998313") {
   const row = document.createElement("div");
   row.className = "line-item";
   row.innerHTML = `
-    <div contenteditable="true">${description}</div>
-    <div contenteditable="true" data-number="qty">${qty}</div>
-    <div contenteditable="true" data-number="rate">${rate}</div>
+    <div class="item-description"><div contenteditable="true" data-item-description></div><small class="item-classification">SAC <span contenteditable="true" data-item-sac></span><span class="item-gst-rate">GST 18%</span></small></div>
+    <div contenteditable="true" data-number="qty"></div>
+    <div contenteditable="true" data-number="rate"></div>
     <div class="line-total">₹0</div>
     <button class="remove-line" type="button" aria-label="Remove line item">&times;</button>
   `;
+  row.querySelector('[data-item-description]').innerHTML = sanitizeEditableHtml(description);
+  row.querySelector('[data-item-sac]').textContent = sac;
+  row.querySelector('[data-number="qty"]').textContent = String(cleanNumber(qty));
+  row.querySelector('[data-number="rate"]').textContent = String(cleanNumber(rate));
   lineItems.appendChild(row);
   calculateTotals();
 }
 
 function getPresets() {
+  if (cloud.user && cloudPresets) return cloudPresets;
+  return getLocalPresets();
+}
+
+function getLocalPresets() {
   try {
     return JSON.parse(localStorage.getItem(storageKey)) || {};
   } catch {
@@ -239,9 +246,10 @@ function collectInvoiceState() {
   });
 
   const items = [...lineItems.querySelectorAll(".line-item")].map((row) => ({
-    description: row.children[0].innerHTML,
-    qty: row.querySelector('[data-number="qty"]').innerHTML,
-    rate: row.querySelector('[data-number="rate"]').innerHTML,
+    description: row.querySelector('[data-item-description]').innerHTML,
+    qty: String(cleanNumber(row.querySelector('[data-number="qty"]').textContent)),
+    rate: String(cleanNumber(row.querySelector('[data-number="rate"]').textContent)),
+    sac: row.querySelector('[data-item-sac]').textContent.trim(),
   }));
 
   return {
@@ -250,21 +258,32 @@ function collectInvoiceState() {
     items,
     logo: logoBox.querySelector("img")?.src || "",
     cover: imageStrip.querySelector("img")?.src || "",
+    signature: document.getElementById('signatureImage').querySelector('img')?.src || '',
+    taxSettings: {
+      placeOfSupply: document.getElementById('placeOfSupplySelect').value,
+      reverseCharge: document.getElementById('reverseChargeSelect').value === 'yes',
+      recipientType: document.getElementById('recipientTypeSelect').value,
+    },
+    totals: totalsBreakdown,
+    einvoice: {
+      enabled: document.getElementById('eInvoiceEnabled').checked,
+      qr: document.getElementById('irnQr').querySelector('img')?.src || '',
+    },
   };
 }
 
-function applyInvoiceState(state) {
+function applyInvoiceState(state, options = {}) {
   if (!state) return;
+  setDocumentLocked(false);
   applyTemplate(state.template || defaultTemplate);
-  invoiceNumberManuallyEdited = false;
 
-  Object.entries(state.fields || {}).forEach(([key, value]) => {
+  Object.entries({ ...wizardCogDefaults, ...state.fields }).forEach(([key, value]) => {
     setPresetField(key, value);
   });
 
   if (Array.isArray(state.items) && state.items.length) {
     lineItems.innerHTML = "";
-    state.items.forEach((item) => addLineItem(item.description, item.qty, item.rate));
+    state.items.forEach((item) => addLineItem(item.description, item.qty, item.rate, item.sac || '998313'));
   }
 
   if (state.logo) {
@@ -277,7 +296,23 @@ function applyInvoiceState(state) {
   } else {
     clearCoverImage();
   }
+  setSignature(state.signature || '');
+  setQrImage(state.einvoice?.qr || '');
+  document.getElementById('eInvoiceEnabled').checked = Boolean(state.einvoice?.enabled);
+  document.getElementById('einvoiceDetails').hidden = !state.einvoice?.enabled;
+  document.getElementById('placeOfSupplySelect').value = state.taxSettings?.placeOfSupply || '19';
+  document.getElementById('reverseChargeSelect').value = state.taxSettings?.reverseCharge ? 'yes' : 'no';
+  document.getElementById('recipientTypeSelect').value = state.taxSettings?.recipientType || 'registered';
+  const copySelect = document.getElementById('copyTypeSelect');
+  if (copySelect) copySelect.value = getPresetFieldText('copyType') === 'Duplicate for Supplier' ? 'supplier' : 'recipient';
+  placeOfSupplyTouched = Boolean(state.taxSettings);
+  if (!options.document) {
+    currentDocument = null;
+    setPresetField('invoiceNumber', 'DRAFT');
+    setInvoiceDates();
+  }
   calculateTotals();
+  renderDocumentState();
 }
 
 function refreshPresetSelect() {
@@ -307,13 +342,15 @@ function applyTemplate(template, options = {}) {
 }
 
 templateSelect.addEventListener("change", () => {
-  applyTemplate(templateSelect.value, { applyDefaults: templateSelect.value === "corporate" });
+  applyTemplate(templateSelect.value);
+  documentDirty = true;
   setStatus("Design applied");
 });
 
 logoUpload.addEventListener("change", (event) => {
   readFileAsDataUrl(event.target.files[0], (src) => {
     setLogo(src);
+    documentDirty = true;
     setStatus("Logo added");
   });
 });
@@ -321,34 +358,33 @@ logoUpload.addEventListener("change", (event) => {
 imageUpload.addEventListener("change", (event) => {
   readFileAsDataUrl(event.target.files[0], (src) => {
     setCoverImage(src);
+    documentDirty = true;
     setStatus("Image added");
   });
 });
 
 document.getElementById("clearLogo").addEventListener("click", () => {
   clearLogo();
+  documentDirty = true;
   setStatus("Logo removed");
 });
 
 document.getElementById("clearImage").addEventListener("click", () => {
   clearCoverImage();
+  documentDirty = true;
   setStatus("Image removed");
 });
 
 document.getElementById("addItem").addEventListener("click", () => {
   addLineItem();
+  documentDirty = true;
   setStatus("Line item added");
 });
 
-document.getElementById("printInvoice").addEventListener("click", () => {
-  const currentInvoiceNumber = getPresetFieldText("invoiceNumber");
-  const invoiceNumber = invoiceNumberManuallyEdited
-    ? currentInvoiceNumber || peekNextInvoiceNumber()
-    : claimNextInvoiceNumber();
-  setPresetField("invoiceNumber", invoiceNumber);
-  setInvoiceDates();
-  document.title = cleanInvoiceFileName(invoiceNumber);
-  calculateTotals();
+document.getElementById("printInvoice").addEventListener("click", finalizeAndPrint);
+document.getElementById('printDraft').addEventListener('click', () => {
+  renderDocumentState();
+  document.title = `Draft-${documentType}`;
   window.print();
 });
 
@@ -363,10 +399,13 @@ document.getElementById("newInvoice").addEventListener("click", () => {
 document.getElementById("resetDesign").addEventListener("click", () => {
   applyTemplate(defaultTemplate, { applyDefaults: true });
   clearCoverImage();
+  currentDocument = null;
+  documentDirty = true;
+  renderDocumentState();
   setStatus("Design reset");
 });
 
-document.getElementById("savePreset").addEventListener("click", () => {
+document.getElementById("savePreset").addEventListener("click", async () => {
   const name = presetName.value.trim();
   if (!name) {
     setStatus("Name the preset first");
@@ -374,12 +413,20 @@ document.getElementById("savePreset").addEventListener("click", () => {
     return;
   }
 
-  const presets = getPresets();
-  presets[name] = collectInvoiceState();
-  savePresets(presets);
-  refreshPresetSelect();
-  presetSelect.value = name;
-  setStatus("Preset saved");
+  try {
+    const state = collectInvoiceState();
+    if (cloud.user) {
+      await cloud.savePreset(documentType, name, state);
+      await refreshCloudData();
+    } else {
+      const presets = getLocalPresets();
+      presets[name] = state;
+      savePresets(presets);
+      refreshPresetSelect();
+    }
+    presetSelect.value = name;
+    setStatus(cloud.user ? 'Preset saved to cloud' : 'Preset saved in this browser');
+  } catch (error) { showCloudError(error); }
 });
 
 presetSelect.addEventListener("change", () => {
@@ -388,21 +435,21 @@ presetSelect.addEventListener("change", () => {
   if (!state) return;
   presetName.value = presetSelect.value;
   applyInvoiceState(state);
+  documentDirty = true;
   setStatus("Preset loaded");
 });
 
 invoicePage.addEventListener("input", (event) => {
+  documentDirty = true;
   const presetField = event.target.closest("[data-preset-field]");
   if (presetField) {
-    if (presetField.dataset.presetField === "invoiceNumber") {
-      invoiceNumberManuallyEdited = true;
-    }
     invoicePage
       .querySelectorAll(`[data-preset-field="${presetField.dataset.presetField}"]`)
       .forEach((field) => {
         if (field !== presetField) field.innerHTML = presetField.innerHTML;
       });
   }
+  if (presetField?.dataset.presetField === 'clientGstin') syncRecipientGstin();
   calculateTotals();
 });
 lineItems.addEventListener("click", (event) => {
@@ -413,6 +460,7 @@ lineItems.addEventListener("click", (event) => {
     return;
   }
   button.closest(".line-item").remove();
+  documentDirty = true;
   calculateTotals();
   setStatus("Line item removed");
 });
@@ -422,7 +470,309 @@ invoicePage.addEventListener("paste", (event) => {
   document.execCommand("insertText", false, event.clipboardData.getData("text/plain"));
 });
 
+initializeWorkspace();
 refreshPresetSelect();
-setPresetField("invoiceNumber", peekNextInvoiceNumber());
+setPresetField("invoiceNumber", "DRAFT");
 setInvoiceDates();
 calculateTotals();
+
+function initializeWorkspace() {
+  const workspace = document.createElement('section');
+  workspace.className = 'panel cloud-panel';
+  workspace.innerHTML = `
+    <div class="panel-title"><span>Cloud workspace</span></div>
+    <p class="panel-help" id="cloudStatus" role="status">Connecting…</p>
+    <form id="cloudSignIn" class="panel-form">
+      <label class="field-label" for="cloudEmail">Your email</label>
+      <input class="field-input" id="cloudEmail" type="email" autocomplete="email" value="wizardcogofficial@gmail.com" required />
+      <button class="primary-button" type="submit">Send sign-in link</button>
+    </form>
+    <button class="secondary-button" id="cloudSignOut" type="button" hidden>Sign out</button>
+    <div id="cloudWorkspace" class="panel-form" hidden>
+      <p class="panel-help" id="nextCloudNumber">Next number is assigned on finalization.</p>
+      <button class="primary-button" id="saveDraft" type="button">Save draft</button>
+      <label class="field-label" for="documentHistory">Saved ${isQuotation ? 'quotations' : 'invoices'}</label>
+      <select class="field-input" id="documentHistory"><option value="">Choose a saved document</option></select>
+      <label class="field-label" for="documentStatusSelect">Document status</label>
+      <select class="field-input" id="documentStatusSelect" disabled><option value="draft">Draft</option><option value="issued">Issued</option>${isQuotation ? '' : '<option value="paid">Paid</option>'}<option value="cancelled">Cancelled</option></select>
+      <button class="secondary-button" id="importLocalPresets" type="button">Import browser presets</button>
+    </div>`;
+  document.querySelector('.document-nav').after(workspace);
+
+  const gstPanel = document.createElement('section');
+  gstPanel.className = 'panel gst-controls';
+  const stateOptions = Object.keys(InvoiceGST.states).sort().map(code => `<option value="${code}" ${code === '19' ? 'selected' : ''}>${InvoiceGST.stateLabel(code)}</option>`).join('');
+  gstPanel.innerHTML = `
+    <div class="panel-title"><span>GST &amp; authorisation</span></div>
+    <label class="field-label" for="recipientTypeSelect">Client registration</label>
+    <select class="field-input" id="recipientTypeSelect"><option value="registered">GST-registered</option><option value="unregistered">Unregistered (URP)</option><option value="uin">UIN holder</option></select>
+    <label class="field-label" for="placeOfSupplySelect">Place of supply</label>
+    <select class="field-input" id="placeOfSupplySelect">${stateOptions}</select>
+    <label class="field-label" for="reverseChargeSelect">Reverse charge</label>
+    <select class="field-input" id="reverseChargeSelect"><option value="no">No</option><option value="yes">Yes — GST paid by recipient</option></select>
+    ${isQuotation ? '' : '<label class="field-label" for="copyTypeSelect">Invoice copy</label><select class="field-input" id="copyTypeSelect"><option value="recipient">Original for Recipient</option><option value="supplier">Duplicate for Supplier</option></select>'}
+    <label class="upload-card"><input id="signatureUpload" type="file" accept="image/png,image/jpeg" /><span>Add signature</span><small>Your authorised signatory's signature</small></label>
+    <button class="secondary-button slim-button" id="clearSignature" type="button">Remove signature</button>
+    <button class="secondary-button" id="saveBusinessDefaults" type="button">Save business details</button>
+    <details class="gst-extra"><summary>e-Invoice, if applicable</summary><div class="panel-form">
+      <label class="checkbox-label"><input id="eInvoiceEnabled" type="checkbox" /> Include IRP details</label>
+      <p class="panel-help">Use the IRN, acknowledgement and signed QR returned by your Invoice Registration Portal.</p>
+      <label class="upload-card"><input id="qrUpload" type="file" accept="image/png,image/jpeg" /><span>Add signed QR image</span></label>
+    </div></details>`;
+  document.querySelector('.sidebar .compact-panel').before(gstPanel);
+
+  const eInvoice = document.createElement('section');
+  eInvoice.className = 'einvoice-details';
+  eInvoice.id = 'einvoiceDetails';
+  eInvoice.hidden = true;
+  eInvoice.innerHTML = `<div><span>Invoice Reference Number (IRN)</span><strong contenteditable="true" data-preset-field="irn" data-placeholder="64-character IRN from your IRP"></strong><p><span>Acknowledgement</span> <strong contenteditable="true" data-preset-field="ackNumber" data-placeholder="Acknowledgement number"></strong> · <strong contenteditable="true" data-preset-field="ackDate" data-placeholder="YYYY-MM-DD"></strong></p></div><div id="irnQr" class="irn-qr"></div>`;
+  document.querySelector('.supply-details').after(eInvoice);
+
+  document.getElementById('cloudSignIn').addEventListener('submit', async event => {
+    event.preventDefault();
+    const button = event.target.querySelector('button');
+    button.disabled = true;
+    try {
+      await cloud.signIn(document.getElementById('cloudEmail').value.trim());
+      document.getElementById('cloudStatus').textContent = 'Check your email and open the sign-in link in this browser.';
+    } catch (error) { showCloudError(error); }
+    finally { button.disabled = false; }
+  });
+  document.getElementById('cloudSignOut').addEventListener('click', async () => {
+    try { await cloud.signOut(); window.location.reload(); } catch (error) { showCloudError(error); }
+  });
+  document.getElementById('saveDraft').addEventListener('click', async () => {
+    try { await saveCurrentDraft(); await refreshCloudData(); setStatus('Draft saved to cloud'); }
+    catch (error) { showCloudError(error); }
+  });
+  document.getElementById('documentHistory').addEventListener('change', async event => {
+    if (!event.target.value) return;
+    try {
+      if (documentDirty && !window.confirm('Load this document? Save your current draft first if you want to keep these edits.')) return;
+      currentDocument = await cloud.document(event.target.value);
+      applyInvoiceState(currentDocument.snapshot, { document: true });
+      documentDirty = false;
+      renderDocumentState();
+      setStatus('Document loaded');
+    } catch (error) { showCloudError(error); }
+  });
+  document.getElementById('documentStatusSelect').addEventListener('change', async event => {
+    if (!currentDocument || currentDocument.status === 'draft') return;
+    try {
+      currentDocument = await cloud.setStatus(currentDocument.id, event.target.value);
+      renderDocumentState();
+      await refreshCloudData();
+    } catch (error) { showCloudError(error); renderDocumentState(); }
+  });
+  document.getElementById('importLocalPresets').addEventListener('click', async () => {
+    try {
+      const count = await cloud.importPresets(documentType, getLocalPresets());
+      await refreshCloudData();
+      setStatus(`${count} browser presets imported`);
+    } catch (error) { showCloudError(error); }
+  });
+  document.getElementById('placeOfSupplySelect').addEventListener('change', () => {
+    placeOfSupplyTouched = true;
+    documentDirty = true;
+    if (document.getElementById('recipientTypeSelect').value === 'unregistered') setPresetField('clientState', InvoiceGST.stateLabel(document.getElementById('placeOfSupplySelect').value));
+    calculateTotals();
+  });
+  document.getElementById('reverseChargeSelect').addEventListener('change', () => { documentDirty = true; calculateTotals(); });
+  document.getElementById('recipientTypeSelect').addEventListener('change', event => {
+    if (event.target.value === 'unregistered') setPresetField('clientGstin', 'URP');
+    else if (getPresetFieldText('clientGstin') === 'URP') setPresetField('clientGstin', '');
+    documentDirty = true;
+    calculateTotals();
+  });
+  document.getElementById('copyTypeSelect')?.addEventListener('change', event => {
+    setPresetField('copyType', event.target.value === 'supplier' ? 'Duplicate for Supplier' : 'Original for Recipient');
+    if (!currentDocument || currentDocument.status === 'draft') documentDirty = true;
+  });
+  document.getElementById('signatureUpload').addEventListener('change', event => readFileAsDataUrl(event.target.files[0], src => { setSignature(src); documentDirty = true; }));
+  document.getElementById('clearSignature').addEventListener('click', () => { setSignature(''); documentDirty = true; });
+  document.getElementById('eInvoiceEnabled').addEventListener('change', event => { eInvoice.hidden = !event.target.checked; documentDirty = true; });
+  document.getElementById('qrUpload').addEventListener('change', event => readFileAsDataUrl(event.target.files[0], src => { setQrImage(src); documentDirty = true; }));
+  document.getElementById('saveBusinessDefaults').addEventListener('click', saveBusinessDefaults);
+  cloud.subscribe(handleCloudSession);
+  cloud.ready.then(handleCloudSession);
+  renderDocumentState();
+}
+
+function setSignature(src) {
+  const box = document.getElementById('signatureImage');
+  box.replaceChildren();
+  box.classList.toggle('is-empty', !src);
+  if (src) {
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = 'Authorised signatory signature';
+    box.append(img);
+  }
+}
+
+function setQrImage(src) {
+  const box = document.getElementById('irnQr');
+  box.replaceChildren();
+  if (src) {
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = 'Signed QR code supplied by the Invoice Registration Portal';
+    box.append(img);
+  }
+}
+
+function syncRecipientGstin() {
+  const gstin = getPresetFieldText('clientGstin').toUpperCase();
+  if (gstin === 'URP') document.getElementById('recipientTypeSelect').value = 'unregistered';
+  else if (InvoiceGST.validGstin(gstin)) {
+    document.getElementById('recipientTypeSelect').value = 'registered';
+    setPresetField('clientState', InvoiceGST.stateLabel(gstin.slice(0, 2)));
+    if (!placeOfSupplyTouched) document.getElementById('placeOfSupplySelect').value = gstin.slice(0, 2);
+  }
+}
+
+function showCloudError(error) {
+  document.getElementById('cloudStatus').textContent = error.message || 'The operation could not be completed.';
+  setStatus('Needs attention');
+}
+
+async function handleCloudSession() {
+  const user = cloud.user;
+  const id = user?.id || null;
+  document.getElementById('cloudSignIn').hidden = Boolean(user);
+  document.getElementById('cloudSignOut').hidden = !user;
+  document.getElementById('cloudWorkspace').hidden = !user;
+  document.getElementById('cloudStatus').textContent = cloud.failure || (user ? `Connected as ${user.email}` : 'Sign in to sync presets, save drafts and issue documents.');
+  if (id === lastCloudUser) return;
+  lastCloudUser = id;
+  cloudPresets = null;
+  if (!user) { refreshPresetSelect(); return; }
+  try {
+    const defaults = await cloud.businessSettings();
+    if (defaults?.common && !documentDirty && !currentDocument) {
+      Object.entries(defaults.common).forEach(([key, value]) => setPresetField(key, value));
+      calculateTotals();
+    }
+    await refreshCloudData();
+  } catch (error) { showCloudError(error); }
+}
+
+async function refreshCloudData() {
+  if (!cloud.user) return;
+  const [presets, documents, sequence] = await Promise.all([
+    cloud.presets(documentType), cloud.documents(documentType), cloud.sequence(documentType),
+  ]);
+  cloudPresets = Object.fromEntries(presets.map(preset => [preset.name, preset.snapshot]));
+  refreshPresetSelect();
+  const history = document.getElementById('documentHistory');
+  history.replaceChildren(new Option('Choose a saved document', ''));
+  documents.forEach(doc => history.add(new Option(`${doc.document_number || 'Draft'} · ${doc.client_name || 'Unnamed client'} · ${doc.status}`, doc.id)));
+  if (currentDocument) history.value = currentDocument.id;
+  document.getElementById('nextCloudNumber').textContent = sequence
+    ? `Next: ${isQuotation ? 'WCQ' : 'WC'}-${sequence.series_code}-${sequence.next_number}`
+    : 'A new numbering series will start when you finalize your first document.';
+}
+
+async function saveBusinessDefaults() {
+  try {
+    if (!InvoiceGST.validGstin(getPresetFieldText('supplierGstin'))) throw new Error('Enter a valid supplier GSTIN before saving business details.');
+    const keys = ['brandName', 'brandLabel', 'senderName', 'senderAddress', 'supplierGstin', 'supplierState', 'supportEmail', 'phoneNumber', 'domain', 'footerMessage', 'signatoryName'];
+    const existing = await cloud.businessSettings() || {};
+    existing.common = Object.fromEntries(keys.map(key => [key, invoicePage.querySelector(`[data-preset-field="${key}"]`)?.innerHTML || '']));
+    await cloud.saveBusinessSettings(existing);
+    setStatus('Business details saved');
+  } catch (error) { showCloudError(error); }
+}
+
+function validateDocument() {
+  for (const [field, label] of [['senderName', 'Supplier legal name'], ['senderAddress', 'Supplier address'], ['clientName', 'Client legal name'], ['clientAddress', 'Client address']]) {
+    if (!getPresetFieldText(field)) throw new Error(`${label} is required.`);
+  }
+  if (!InvoiceGST.validGstin(getPresetFieldText('supplierGstin'))) throw new Error('The supplier GSTIN is missing or has an invalid format/checksum.');
+  const recipientType = document.getElementById('recipientTypeSelect').value;
+  const gstin = getPresetFieldText('clientGstin').toUpperCase();
+  if (!isQuotation && recipientType === 'registered' && !InvoiceGST.validGstin(gstin)) throw new Error('Enter the client’s GSTIN, or select Unregistered (URP).');
+  if (!isQuotation && recipientType === 'uin' && !/^\d{2}[A-Z0-9]{13}$/.test(gstin)) throw new Error('Enter the recipient’s 15-character UIN.');
+  if (!InvoiceGST.states[document.getElementById('placeOfSupplySelect').value]) throw new Error('Choose the place of supply.');
+  for (const row of lineItems.querySelectorAll('.line-item')) {
+    if (!row.querySelector('[data-item-description]').textContent.trim()) throw new Error('Each service needs a description.');
+    if (!/^\d{6}$/.test(row.querySelector('[data-item-sac]').textContent.trim())) throw new Error('Enter a six-digit SAC for each service.');
+    const numeric = kind => row.querySelector(`[data-number="${kind}"]`).textContent.replace(/[₹,\s]/g, '');
+    if (!/^\d+(\.\d+)?$/.test(numeric('qty')) || !/^\d+(\.\d+)?$/.test(numeric('rate')) || Number(numeric('qty')) <= 0) throw new Error('Enter valid positive quantities and non-negative rates.');
+  }
+  if (document.getElementById('eInvoiceEnabled').checked) {
+    if (!/^[a-f0-9]{64}$/i.test(getPresetFieldText('irn')) || !/^\d{15}$/.test(getPresetFieldText('ackNumber')) || !/^\d{4}-\d{2}-\d{2}$/.test(getPresetFieldText('ackDate')) || !document.getElementById('irnQr').querySelector('img')) throw new Error('Complete the IRN, acknowledgement, date and signed QR from your IRP.');
+  }
+}
+
+async function saveCurrentDraft() {
+  if (draftSave) return draftSave;
+  if (!cloud.user) throw new Error('Sign in to save this document to the cloud.');
+  if (currentDocument && currentDocument.status !== 'draft') throw new Error('Issued documents are locked. Start a new document to make changes.');
+  calculateTotals();
+  const snapshot = collectInvoiceState();
+  draftSave = cloud.saveDraft(currentDocument?.id || null, documentType, getPresetFieldText('clientName'), snapshot)
+    .then(doc => {
+      currentDocument = doc;
+      documentDirty = JSON.stringify(snapshot) !== JSON.stringify(collectInvoiceState());
+      renderDocumentState();
+      return doc;
+    }).finally(() => { draftSave = null; });
+  return draftSave;
+}
+
+function setDocumentLocked(locked) {
+  invoicePage.querySelectorAll('[contenteditable]').forEach(field => { field.contentEditable = String(!locked); });
+  invoicePage.querySelectorAll('.remove-line').forEach(button => { button.disabled = locked; });
+  for (const id of ['templateSelect', 'resetDesign', 'addItem', 'logoUpload', 'imageUpload', 'clearLogo', 'clearImage', 'signatureUpload', 'clearSignature', 'placeOfSupplySelect', 'reverseChargeSelect', 'recipientTypeSelect', 'eInvoiceEnabled', 'qrUpload', 'saveDraft', 'printDraft']) {
+    const control = document.getElementById(id);
+    if (control) control.disabled = locked;
+  }
+}
+
+function renderDocumentState() {
+  const issued = currentDocument && currentDocument.status !== 'draft';
+  setDocumentLocked(Boolean(issued || isFinalizing));
+  invoicePage.classList.toggle('is-draft', !issued);
+  invoicePage.dataset.watermark = isQuotation ? 'DRAFT QUOTATION' : 'DRAFT · NOT A TAX INVOICE';
+  document.getElementById('printInvoice').textContent = issued ? 'Reprint / Save PDF' : 'Finalize & Print';
+  const status = document.getElementById('documentStatusSelect');
+  if (status) { status.value = currentDocument?.status || 'draft'; status.disabled = !issued; }
+  if (issued) {
+    setPresetField('invoiceNumber', currentDocument.document_number);
+    const labels = { issued: isQuotation ? 'Issued' : 'Unpaid', paid: 'Paid', cancelled: 'Cancelled' };
+    setPresetField('invoiceStatus', labels[currentDocument.status]);
+  } else setPresetField('invoiceStatus', 'Draft');
+}
+
+async function finalizeAndPrint() {
+  const button = document.getElementById('printInvoice');
+  button.disabled = true;
+  try {
+    if (!cloud.user) throw new Error('Sign in to finalize this document. You can use Print draft without signing in.');
+    if (currentDocument?.id && currentDocument.status === 'draft') {
+      const saved = await cloud.document(currentDocument.id);
+      if (saved.status !== 'draft') {
+        currentDocument = saved;
+        applyInvoiceState(saved.snapshot, { document: true });
+        documentDirty = false;
+      }
+    }
+    if (!currentDocument || currentDocument.status === 'draft') {
+      validateDocument();
+      isFinalizing = true;
+      renderDocumentState();
+      await saveCurrentDraft();
+      currentDocument = await cloud.finalize(currentDocument.id);
+      applyInvoiceState(currentDocument.snapshot, { document: true });
+      documentDirty = false;
+      renderDocumentState();
+    }
+    try { await refreshCloudData(); }
+    catch (error) { showCloudError(new Error(`Document saved. History could not refresh: ${error.message}`)); }
+    document.title = cleanInvoiceFileName(currentDocument.document_number);
+    calculateTotals();
+    window.print();
+  } catch (error) { showCloudError(error); }
+  finally { isFinalizing = false; renderDocumentState(); button.disabled = false; }
+}
