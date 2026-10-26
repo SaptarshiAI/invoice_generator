@@ -62,6 +62,9 @@ Control + C
 - The invoice date updates automatically when printing.
 - The due date is set to 15 days after the invoice date.
 - The Save as PDF filename should use the invoice number as the browser's suggested filename.
+- Both invoices and quotations automatically calculate **GST (18%)** from the line-item subtotal. Editing quantities or rates, adding or removing items, and loading a preset recalculates GST and the grand total. GST is calculated rather than manually editable, and monetary values are rounded to paise.
+
+The 18% rate is intended for taxable domestic IT services such as ERPNext implementation, customization, and support. CBIC's [IT/ITES FAQ](https://cbic-gst.gov.in/hindi/sectoral-faq.html) lists IT services at 18%; qualifying exports/SEZ supplies can have different treatment.
 
 ## Quotations
 
@@ -93,7 +96,7 @@ There is no database or backend. Clicking **Save** stores the document snapshot 
 - Invoice presets: `invoice-studio-presets`
 - Quotation presets: `quotation-studio-presets`
 
-Each preset includes the template, editable document fields, line items, tax, logo, and optional cover image. Saving under the same name replaces that preset. Unsaved edits are not automatically persisted.
+Each preset includes the template, editable document fields, line items, logo, and optional cover image. GST is recalculated at 18% when loading a preset, including older presets that contain a manually entered tax amount. Saving under the same name replaces that preset. Unsaved edits are not automatically persisted.
 
 Storage belongs to the current browser profile and exact site origin (protocol, hostname, and port). For example, `http://127.0.0.1:5173` and `http://localhost:5173` have separate storage, as do different ports. Presets survive normal reloads and browser restarts but do not sync across browsers or devices. Clearing site data deletes them; private browsing storage is temporary.
 

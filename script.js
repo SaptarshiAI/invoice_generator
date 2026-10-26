@@ -14,6 +14,7 @@ const presetSelect = document.getElementById("presetSelect");
 
 const defaultDocumentTitle = document.title;
 const defaultTemplate = "porcelain";
+const gstRate = 0.18;
 const isQuotation = document.body.dataset.documentType === "quotation";
 const documentType = isQuotation ? "quotation" : "invoice";
 const documentNumberPrefix = isQuotation ? "WC-Q" : "WC";
@@ -50,7 +51,8 @@ const wizardCogDefaults = {
 const currency = new Intl.NumberFormat("en-IN", {
   style: "currency",
   currency: "INR",
-  maximumFractionDigits: 0,
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
 });
 
 function cleanNumber(value) {
@@ -135,19 +137,20 @@ function setStatus(message) {
 }
 
 function calculateTotals() {
-  let nextSubtotal = 0;
+  let subtotalPaise = 0;
 
   lineItems.querySelectorAll(".line-item").forEach((row) => {
     const qty = cleanNumber(row.querySelector('[data-number="qty"]').textContent);
     const rate = cleanNumber(row.querySelector('[data-number="rate"]').textContent);
-    const total = qty * rate;
-    row.querySelector(".line-total").textContent = formatCurrency(total);
-    nextSubtotal += total;
+    const lineTotalPaise = Math.round(qty * rate * 100);
+    row.querySelector(".line-total").textContent = formatCurrency(lineTotalPaise / 100);
+    subtotalPaise += lineTotalPaise;
   });
 
-  const tax = cleanNumber(taxAmount.textContent);
-  subtotal.textContent = formatCurrency(nextSubtotal);
-  grandTotal.textContent = formatCurrency(nextSubtotal + tax);
+  const taxPaise = Math.round(subtotalPaise * gstRate);
+  subtotal.textContent = formatCurrency(subtotalPaise / 100);
+  taxAmount.textContent = formatCurrency(taxPaise / 100);
+  grandTotal.textContent = formatCurrency((subtotalPaise + taxPaise) / 100);
 }
 
 function readFileAsDataUrl(file, callback) {
@@ -245,7 +248,6 @@ function collectInvoiceState() {
     template: invoicePage.className.match(/template-\w+/)?.[0]?.replace("template-", "") || defaultTemplate,
     fields,
     items,
-    tax: taxAmount.innerHTML,
     logo: logoBox.querySelector("img")?.src || "",
     cover: imageStrip.querySelector("img")?.src || "",
   };
@@ -265,7 +267,6 @@ function applyInvoiceState(state) {
     state.items.forEach((item) => addLineItem(item.description, item.qty, item.rate));
   }
 
-  if (state.tax) taxAmount.innerHTML = state.tax;
   if (state.logo) {
     setLogo(state.logo);
   } else {
