@@ -48,7 +48,7 @@ const wizardCogDefaults = {
   copyType: isQuotation ? "Quotation — not a tax invoice" : "Original for Recipient",
   deliveryAddress: "Same as billing address",
   signatoryName: "",
-  senderAddress: "Om Residency, Block - 1, Flat - 7A, 83A, Cossipore Road, Kolkata - 700002",
+  senderAddress: "7, Block-1, Flat - 7A, Om Residency, 83A, Cossipore Road, 4B bus stand, Cossipore, Kolkata, Kolkata, West Bengal, 700002",
   notes: isQuotation
     ? "Thank you for considering WizardCog. This quotation is valid for 15 days from the issue date. Please contact us to confirm acceptance."
     : "Thank you for choosing WizardCog. Payment can be made by bank transfer.",
@@ -310,6 +310,9 @@ function applyInvoiceState(state, options = {}) {
     currentDocument = null;
     setPresetField('invoiceNumber', 'DRAFT');
     setInvoiceDates();
+  } else if (currentDocument?.status === 'draft') {
+    // A reopened draft shows today's dates; issued documents keep their stored dates.
+    setInvoiceDates();
   }
   calculateTotals();
   renderDocumentState();
@@ -389,6 +392,7 @@ document.getElementById('printSignIn').addEventListener('click', () => {
 });
 document.getElementById('printDraft').addEventListener('click', () => {
   document.getElementById('printFeedback').hidden = true;
+  if (!currentDocument || currentDocument.status === 'draft') setInvoiceDates();
   renderDocumentState();
   document.title = `Draft-${documentType}`;
   window.print();
