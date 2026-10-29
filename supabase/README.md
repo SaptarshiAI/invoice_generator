@@ -6,7 +6,7 @@ The dedicated **wizardcog-invoices** project (`tyeacscersyphhevmfdh`) belongs to
 
 ## Applied migrations
 
-Migrations 1–3 have been applied to this project; **migration 4 must still be applied** in SQL Editor before the proforma page and cancel-and-reuse work. For a new project, apply each file once in SQL Editor:
+All four migrations have been applied in order to this project (migration 4 on 29 October 2026; `tests/database.sql` passed afterwards). For a new project, apply each file once in SQL Editor:
 
 1. `migrations/202610260001_invoice_database.sql` — private tables, RLS, issued-record protection and atomic numbering.
 2. `migrations/202610260002_gst_validation.sql` — snapshot validation, GSTIN checksum and server-side tax calculation.
