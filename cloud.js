@@ -46,9 +46,9 @@
       }));
     },
     async signOut() { unwrap(await (await connection()).auth.signOut()); },
-    async presets(type) {
+    async presets() {
       return unwrap(await (await connection()).from('client_presets')
-        .select('name,snapshot').eq('document_type', type).order('name'));
+        .select('document_type,name,snapshot').order('name'));
     },
     async savePreset(type, name, snapshot) {
       return unwrap(await (await connection()).from('client_presets').upsert({

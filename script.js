@@ -22,6 +22,8 @@ const isProforma = documentType === "proforma";
 const documentLabel = { invoice: "invoice", quotation: "quotation", proforma: "proforma invoice" }[documentType];
 const proformaHandoffKey = "invoice-from-proforma";
 const storageKey = `${documentType}-studio-presets`;
+const presetTypes = ["invoice", "proforma", "quotation"];
+const presetTypeLabels = { invoice: "Invoice presets", proforma: "Proforma presets", quotation: "Quotation presets" };
 const wizardCogLogo = "assets/wizardcoglogo-transparent-cropped.png";
 const cloud = window.invoiceCloud;
 let currentDocument = null;
@@ -229,17 +231,33 @@ function addLineItem(description = "New service", qty = "1", rate = "0", sac = "
   calculateTotals();
 }
 
+// Presets from every document type, so a client set up once can be reused on any page.
 function getPresets() {
   if (cloud.user && cloudPresets) return cloudPresets;
-  return getLocalPresets();
+  return presetTypes.flatMap(type => Object.entries(getLocalPresets(type)).map(([name, snapshot]) => ({ type, name, snapshot })));
 }
 
-function getLocalPresets() {
+function getLocalPresets(type = documentType) {
   try {
-    return JSON.parse(localStorage.getItem(storageKey)) || {};
+    return JSON.parse(localStorage.getItem(`${type}-studio-presets`)) || {};
   } catch {
     return {};
   }
+}
+
+// Keep the client, services, design and tax settings, but use this page's own
+// title, copy label and notes (and payment wording when a quotation is involved).
+function adaptPresetSnapshot(preset) {
+  if (preset.type === documentType) return preset.snapshot;
+  const snapshot = structuredClone(preset.snapshot);
+  const keys = ['invoiceType', 'copyType', 'notes'];
+  if (isQuotation || preset.type === 'quotation') keys.push('bankName', 'accountNumber', 'ifscCode', 'upiId');
+  snapshot.fields = { ...snapshot.fields };
+  keys.forEach(key => {
+    if (key in wizardCogDefaults) snapshot.fields[key] = wizardCogDefaults[key];
+    else delete snapshot.fields[key];
+  });
+  return snapshot;
 }
 
 function savePresets(presets) {
@@ -328,14 +346,18 @@ function applyInvoiceState(state, options = {}) {
 function refreshPresetSelect() {
   const presets = getPresets();
   presetSelect.innerHTML = '<option value="">Choose a saved preset</option>';
-  Object.keys(presets)
-    .sort()
-    .forEach((name) => {
-      const option = document.createElement("option");
-      option.value = name;
-      option.textContent = name;
-      presetSelect.appendChild(option);
-    });
+  [documentType, ...presetTypes.filter((type) => type !== documentType)].forEach((type) => {
+    const names = presets.filter((preset) => preset.type === type).map((preset) => preset.name).sort();
+    if (!names.length) return;
+    const group = document.createElement("optgroup");
+    group.label = presetTypeLabels[type];
+    names.forEach((name) => group.append(new Option(name, presetKey(type, name))));
+    presetSelect.appendChild(group);
+  });
+}
+
+function presetKey(type, name) {
+  return `${type}:${name}`;
 }
 
 function applyTemplate(template, options = {}) {
@@ -441,19 +463,18 @@ document.getElementById("savePreset").addEventListener("click", async () => {
       savePresets(presets);
       refreshPresetSelect();
     }
-    presetSelect.value = name;
+    presetSelect.value = presetKey(documentType, name);
     setStatus(cloud.user ? 'Preset saved to cloud' : 'Preset saved in this browser');
   } catch (error) { showCloudError(error); }
 });
 
 presetSelect.addEventListener("change", () => {
-  const presets = getPresets();
-  const state = presets[presetSelect.value];
-  if (!state) return;
-  presetName.value = presetSelect.value;
-  applyInvoiceState(state);
+  const preset = getPresets().find((entry) => presetKey(entry.type, entry.name) === presetSelect.value);
+  if (!preset) return;
+  presetName.value = preset.name;
+  applyInvoiceState(adaptPresetSnapshot(preset));
   documentDirty = true;
-  setStatus("Preset loaded");
+  setStatus(preset.type === documentType ? "Preset loaded" : `${presetTypeLabels[preset.type].replace(/s$/, "")} loaded`);
 });
 
 invoicePage.addEventListener("input", (event) => {
@@ -725,9 +746,9 @@ async function handleCloudSession() {
 async function refreshCloudData() {
   if (!cloud.user) return;
   const [presets, documents, nextNumber] = await Promise.all([
-    cloud.presets(documentType), cloud.documents(documentType), cloud.nextNumber(documentType),
+    cloud.presets(), cloud.documents(documentType), cloud.nextNumber(documentType),
   ]);
-  cloudPresets = Object.fromEntries(presets.map(preset => [preset.name, preset.snapshot]));
+  cloudPresets = presets.map(preset => ({ type: preset.document_type, name: preset.name, snapshot: preset.snapshot }));
   refreshPresetSelect();
   const history = document.getElementById('documentHistory');
   history.replaceChildren(new Option('Choose a saved document', ''));

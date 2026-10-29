@@ -36,7 +36,7 @@ This is only offered for an issued, unpaid document without an IRN, and only wit
 
 ## Presets and business details
 
-While signed in, **Save** in Client Preset stores a named snapshot in Supabase. Loading a preset creates a fresh draft, even if the preset contains an old document number. Invoice and quotation presets are separate. **Save business details** stores common legal name, address, GSTIN, branding and contact defaults for both pages. Client and payment details are retained in document/preset snapshots.
+While signed in, **Save** in Client Preset stores a named snapshot in Supabase. Loading a preset creates a fresh draft, even if the preset contains an old document number. The preset list on every page also shows presets saved on the other pages (grouped as Invoice, Proforma and Quotation presets). Loading one from another page keeps the client, services, design and tax settings but uses this page's title, copy label and notes; payment wording is also reset when moving to or from a quotation. Saving stores the preset under the current page. **Save business details** stores common legal name, address, GSTIN, branding and contact defaults for both pages. Client and payment details are retained in document/preset snapshots.
 
 When signed out, preset saving remains available in this browser's `localStorage`:
 

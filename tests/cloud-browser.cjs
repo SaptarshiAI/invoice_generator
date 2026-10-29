@@ -15,7 +15,7 @@ const adapter = `(() => {
   window.invoiceCloud = {
     ready: Promise.resolve(), get user() { return read().signedOut ? null : {id:'test-owner', email:'wizardcogofficial@gmail.com'}; }, failure:'',
     subscribe() {}, async businessSettings() { return null; },
-    async presets() { return Object.entries(read().presets).map(([name,snapshot]) => ({name,snapshot})); },
+    async presets() { return Object.values(read().presets); },
     async documents() {
       const state=read();
       if(state.failRefresh) { state.failRefresh=false; write(state); throw Error('Simulated refresh failure'); }
@@ -45,7 +45,7 @@ const adapter = `(() => {
       return copy(doc);
     },
     async setStatus(id,status) { const state=read(); const doc=state.docs.find(d=>d.id===id); doc.status=status; write(state); return copy(doc); },
-    async savePreset(type,name,snapshot) { const state=read();state.presets[name]=snapshot;write(state); }
+    async savePreset(type,name,snapshot) { const state=read();state.presets[type+':'+name]={document_type:type,name,snapshot};write(state); }
   };
 })();`;
 (async () => {
@@ -96,16 +96,16 @@ const adapter = `(() => {
       await page.waitForFunction(()=>window.__cloudTest.read().docs[0].status==='cancelled');
       assert.equal(await page.locator('[data-preset-field="clientName"]').getAttribute('contenteditable'),'false');
       // Loading a preset starts a fresh draft; old issued numbers/dates never carry over.
-      await page.evaluate(()=>{
+      await page.evaluate(type=>{
         const state=window.__cloudTest.read();
         const preset=structuredClone(state.docs[0].snapshot);
         preset.fields.clientName='<img src=x onerror="window.__xss=true"><b onclick="window.__xss=true">Safe client</b>';
         preset.items[0].description='<svg onload="window.__xss=true"></svg>Safe service';
-        state.presets['Saved client']=preset;window.__cloudTest.write(state);
-      });
+        state.presets[type+':Saved client']={document_type:type,name:'Saved client',snapshot:preset};window.__cloudTest.write(state);
+      },type);
       await page.reload();
-      await page.locator('#presetSelect option[value="Saved client"]').waitFor({state:'attached'});
-      await page.selectOption('#presetSelect','Saved client');
+      await page.locator('#presetSelect option[value="'+type+':Saved client"]').waitFor({state:'attached'});
+      await page.selectOption('#presetSelect',type+':Saved client');
       assert.equal(await page.locator('[data-preset-field="invoiceNumber"]').first().textContent(),'DRAFT');
       assert.equal(await page.locator('[data-preset-field="clientName"]').getAttribute('contenteditable'),'true');
       assert.equal(await page.locator('[data-preset-field="clientName"] img, [data-preset-field="clientName"] [onclick], [data-item-description] svg').count(),0);
@@ -117,7 +117,7 @@ const adapter = `(() => {
       assert.equal(await page.evaluate(()=>window.__cloudTest.read().next),583723);
       assert.match(await page.locator('#cloudStatus').textContent(),/Document saved.*History could not refresh/);
       // Recover a committed invoice after the finalization response was lost.
-      await page.selectOption('#presetSelect','Saved client');
+      await page.selectOption('#presetSelect',type+':Saved client');
       await page.evaluate(()=>{const state=window.__cloudTest.read();state.loseResponse=true;window.__cloudTest.write(state);});
       await page.click('#printInvoice');
       await page.locator('#cloudStatus').filter({hasText:'lost finalization response'}).waitFor();
@@ -166,6 +166,22 @@ const adapter = `(() => {
         await page.click('#printInvoice');
         await page.waitForFunction(()=>window.__prints>=1);
       };
+      // An invoice preset is offered on the proforma page and adopts proforma labels.
+      await page.goto(base+'/proforma.html');
+      await page.evaluate(()=>{
+        const state=window.__cloudTest.read();
+        state.presets['invoice:Acme']={document_type:'invoice',name:'Acme',snapshot:{template:'signal',fields:{clientName:'Acme preset client',invoiceType:'Tax Invoice',copyType:'Original for Recipient',notes:'Invoice notes',bankName:'Preset Bank'},items:[{description:'Preset service',qty:'2',rate:'1500',sac:'998313'}]}};
+        window.__cloudTest.write(state);
+      });
+      await page.reload();
+      await page.locator('#presetSelect optgroup[label="Invoice presets"] option[value="invoice:Acme"]').waitFor({state:'attached'});
+      await page.selectOption('#presetSelect','invoice:Acme');
+      assert.equal(await page.locator('[data-preset-field="clientName"]').textContent(),'Acme preset client');
+      assert.equal(await page.locator('[data-preset-field="invoiceType"]').textContent(),'Proforma Invoice');
+      assert.equal(await page.locator('[data-preset-field="copyType"]').textContent(),'Proforma — not a tax invoice');
+      assert.equal(await page.locator('[data-preset-field="bankName"]').textContent(),'Preset Bank');
+      assert.equal(await page.locator('[data-item-description]').first().textContent(),'Preset service');
+      assert.equal(await page.locator('#templateSelect').inputValue(),'signal');
       await issue();
       assert.equal(await page.locator('[data-preset-field="invoiceNumber"]').first().textContent(),'WCP-A7F3-583721');
       assert.equal(await page.locator('[data-preset-field="invoiceType"]').textContent(),'Proforma Invoice');
