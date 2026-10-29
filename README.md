@@ -8,7 +8,7 @@ A static invoice and quotation editor with four printable designs and a private 
 python3 -m http.server 5173 --bind 127.0.0.1
 ```
 
-Open `http://127.0.0.1:5173/index.html` for invoices or `/quotation.html` for quotations. Use port 5173 for the configured local sign-in redirects. Production is `https://invoice.wizardcog.com`.
+Open `http://127.0.0.1:5173/index.html` for tax invoices, `/proforma.html` for proforma invoices or `/quotation.html` for quotations. Use port 5173 for the configured local sign-in redirects. Production is `https://invoice.wizardcog.com`.
 
 ## Save and issue documents
 
@@ -22,7 +22,17 @@ Open `http://127.0.0.1:5173/index.html` for invoices or `/quotation.html` for qu
 
 If **Finalize & Print** is blocked, the reason appears directly below the button. **Go to sign-in** takes you to the email form. Open the sign-in link in the same browser profile and site where you are creating the document; the app works in any modern browser, but sign-in sessions are not shared between profiles or between localhost and production.
 
-Numbers look like `WC-A7F3-583721` (invoice) or `WCQ-B4E8-427918` (quotation); these are examples only. The series and initial six-digit value are non-obvious, then numbers advance consecutively. The Indian financial year and actual counter remain private. Previewing the next number does not consume it. Printing again, retrying finalization, or recovering a lost response does not allocate another number.
+Numbers look like `WC-A7F3-583721` (invoice), `WCP-C2D9-318204` (proforma) or `WCQ-B4E8-427918` (quotation); these are examples only. The series and initial six-digit value are non-obvious, then numbers advance consecutively. The Indian financial year and actual counter remain private. Previewing the next number does not consume it. Printing again, retrying finalization, or recovering a lost response does not allocate another number.
+
+## Cancel a printed invoice and reuse its number
+
+If an invoice was finalized/printed but **never sent to the client**, open it under **Saved invoices** and select **Cancel & reuse number**. The record stays in history as cancelled, and the next invoice you finalize in the same financial year receives that number (the lowest released number is used first). The sidebar shows `Next: … (reused from a cancelled document)` while a released number is waiting.
+
+This is only offered for an issued, unpaid document without an IRN, and only within the same financial year. If the invoice already reached the client, use **Cancelled (number kept)** in Document status instead — that number is retained and reported as cancelled. A released record cannot be reopened.
+
+## Proforma invoices
+
+`proforma.html` issues proforma invoices with their own independent `WCP-` series, labelled "Proforma — not a tax invoice". Client GSTIN is optional on a proforma. Once the client pays or the supply happens, open the issued proforma and select **Create tax invoice from this**: the invoice page opens with the same client, services and tax settings as a fresh draft, noting the proforma number. Finalizing it then assigns the next tax-invoice number.
 
 ## Presets and business details
 
@@ -31,6 +41,7 @@ While signed in, **Save** in Client Preset stores a named snapshot in Supabase. 
 When signed out, preset saving remains available in this browser's `localStorage`:
 
 - `invoice-studio-presets`
+- `proforma-studio-presets`
 - `quotation-studio-presets`
 
 Existing browser presets are not deleted or automatically uploaded. After signing in, select **Import browser presets** separately on each page. Import works only in the browser profile and exact origin where the old presets exist. Existing cloud names are preserved on import. Historical PDFs/numbers are not imported or renumbered automatically. Old local sequence keys are no longer used.

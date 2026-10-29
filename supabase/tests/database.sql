@@ -68,6 +68,43 @@ begin
   if quote.document_number !~ '^WCQ-[A-F0-9]{4}-[0-9]{6}$' or length(quote.document_number) > 16 then
     raise exception 'Invalid quotation format.';
   end if;
+  -- A never-sent invoice releases its number to the next finalization, without consuming the counter.
+  select next_number into counter_before from public.document_sequences where document_type = 'invoice';
+  next_document := public.release_document_number(next_document.id);
+  if next_document.status <> 'cancelled' or next_document.number_released_at is null then
+    raise exception 'Cancel-and-reuse did not release the number.';
+  end if;
+  if public.next_document_number('invoice') <> next_document.document_number then
+    raise exception 'The preview does not offer the released number.';
+  end if;
+  insert into public.documents (document_type, client_name, snapshot)
+    values ('invoice', 'Reuse client', '{"fields":{"senderName":"WIZARDCOG","senderAddress":"Kolkata, West Bengal","supplierGstin":"19AAFFW5069E1ZV","clientAddress":"Test address, West Bengal","clientGstin":"URP"},"items":[{"description":"Support","qty":"1","rate":"5000","sac":"998314"}],"taxSettings":{"placeOfSupply":"19","reverseCharge":false,"recipientType":"unregistered"}}')
+    returning * into repeated_document;
+  repeated_document := public.finalize_document(repeated_document.id);
+  select next_number into counter_after from public.document_sequences where document_type = 'invoice';
+  if repeated_document.document_number <> next_document.document_number or counter_before <> counter_after then
+    raise exception 'The released number was not reused.';
+  end if;
+  begin
+    perform public.set_document_status(next_document.id, 'issued');
+    raise exception 'A released document was reopened.';
+  exception when raise_exception then
+    if sqlerrm not like 'This document was cancelled and its number released%' then raise; end if;
+  end;
+  begin
+    perform public.set_document_status(first_document.id, 'paid');
+    perform public.release_document_number(first_document.id);
+    raise exception 'A paid document released its number.';
+  exception when raise_exception then
+    if sqlerrm <> 'Only an issued, unpaid document can be cancelled for number reuse.' then raise; end if;
+  end;
+  insert into public.documents (document_type, client_name, snapshot)
+    values ('proforma', 'Proforma client', '{"fields":{"senderName":"WIZARDCOG","senderAddress":"Kolkata, West Bengal","supplierGstin":"19AAFFW5069E1ZV","clientAddress":"Test address, West Bengal","clientGstin":""},"items":[{"description":"Implementation","qty":"1","rate":"10000","sac":"998314"}],"taxSettings":{"placeOfSupply":"19","reverseCharge":false,"recipientType":"registered"}}')
+    returning * into quote;
+  quote := public.finalize_document(quote.id);
+  if quote.document_number !~ '^WCP-[A-F0-9]{4}-[0-9]{6}$' or length(quote.document_number) > 16 then
+    raise exception 'Invalid proforma format.';
+  end if;
   repeated_document := public.set_document_status(first_document.id, 'paid');
   if repeated_document.status <> 'paid' then raise exception 'Status update failed.'; end if;
   begin

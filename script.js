@@ -14,8 +14,13 @@ const presetSelect = document.getElementById("presetSelect");
 
 const defaultDocumentTitle = document.title;
 const defaultTemplate = "porcelain";
-const isQuotation = document.body.dataset.documentType === "quotation";
-const documentType = isQuotation ? "quotation" : "invoice";
+const documentType = ["quotation", "proforma"].includes(document.body.dataset.documentType)
+  ? document.body.dataset.documentType
+  : "invoice";
+const isQuotation = documentType === "quotation";
+const isProforma = documentType === "proforma";
+const documentLabel = { invoice: "invoice", quotation: "quotation", proforma: "proforma invoice" }[documentType];
+const proformaHandoffKey = "invoice-from-proforma";
 const storageKey = `${documentType}-studio-presets`;
 const wizardCogLogo = "assets/wizardcoglogo-transparent-cropped.png";
 const cloud = window.invoiceCloud;
@@ -37,7 +42,7 @@ const wizardCogDefaults = {
   brandLabel: "ERP That Works Like Magic",
   brandName: "WizardCog",
   footerMessage: "Let's build what's next.",
-  invoiceType: isQuotation ? "Quotation" : "Tax Invoice",
+  invoiceType: isQuotation ? "Quotation" : isProforma ? "Proforma Invoice" : "Tax Invoice",
   invoiceNumber: "DRAFT",
   invoiceStatus: "Draft",
   senderName: "WIZARDCOG",
@@ -45,13 +50,15 @@ const wizardCogDefaults = {
   supplierState: "West Bengal (19)",
   clientGstin: "",
   clientState: "West Bengal (19)",
-  copyType: isQuotation ? "Quotation — not a tax invoice" : "Original for Recipient",
+  copyType: isQuotation ? "Quotation — not a tax invoice" : isProforma ? "Proforma — not a tax invoice" : "Original for Recipient",
   deliveryAddress: "Same as billing address",
   signatoryName: "",
   senderAddress: "7, Block-1, Flat - 7A, Om Residency, 83A, Cossipore Road, 4B bus stand, Cossipore, Kolkata, Kolkata, West Bengal, 700002",
   notes: isQuotation
     ? "Thank you for considering WizardCog. This quotation is valid for 15 days from the issue date. Please contact us to confirm acceptance."
-    : "Thank you for choosing WizardCog. Payment can be made by bank transfer.",
+    : isProforma
+      ? "This is a proforma invoice, not a tax invoice. A GST tax invoice will be issued on receipt of payment / supply of services."
+      : "Thank you for choosing WizardCog. Payment can be made by bank transfer.",
   bankName: isQuotation ? "To be agreed upon acceptance" : "Karur Vysya Bank",
   accountNumber: isQuotation ? "To be confirmed" : "3101135000023718",
   ifscCode: isQuotation ? "As listed above" : "KVBL0003101",
@@ -485,6 +492,28 @@ refreshPresetSelect();
 setPresetField("invoiceNumber", "DRAFT");
 setInvoiceDates();
 calculateTotals();
+loadProformaHandoff();
+
+// A proforma's "Create tax invoice" opens this page with its contents as a fresh draft.
+function loadProformaHandoff() {
+  if (documentType !== 'invoice') return;
+  let handoff;
+  try {
+    handoff = JSON.parse(sessionStorage.getItem(proformaHandoffKey));
+    sessionStorage.removeItem(proformaHandoffKey);
+  } catch { return; }
+  if (!handoff?.snapshot) return;
+  const snapshot = structuredClone(handoff.snapshot);
+  snapshot.fields = {
+    ...snapshot.fields,
+    invoiceType: wizardCogDefaults.invoiceType,
+    copyType: wizardCogDefaults.copyType,
+    notes: `Against proforma invoice ${handoff.number}. ${wizardCogDefaults.notes}`,
+  };
+  applyInvoiceState(snapshot);
+  documentDirty = true;
+  setStatus(`Drafted from ${handoff.number}`);
+}
 
 function initializeWorkspace() {
   const workspace = document.createElement('section');
@@ -501,10 +530,15 @@ function initializeWorkspace() {
     <div id="cloudWorkspace" class="panel-form" hidden>
       <p class="panel-help" id="nextCloudNumber">Next number is assigned on finalization.</p>
       <button class="primary-button" id="saveDraft" type="button">Save draft</button>
-      <label class="field-label" for="documentHistory">Saved ${isQuotation ? 'quotations' : 'invoices'}</label>
+      <label class="field-label" for="documentHistory">Saved ${documentLabel}s</label>
       <select class="field-input" id="documentHistory"><option value="">Choose a saved document</option></select>
       <label class="field-label" for="documentStatusSelect">Document status</label>
-      <select class="field-input" id="documentStatusSelect" disabled><option value="draft">Draft</option><option value="issued">Issued</option>${isQuotation ? '' : '<option value="paid">Paid</option>'}<option value="cancelled">Cancelled</option></select>
+      <select class="field-input" id="documentStatusSelect" disabled><option value="draft">Draft</option><option value="issued">Issued</option>${isQuotation ? '' : '<option value="paid">Paid</option>'}<option value="cancelled">Cancelled (number kept)</option></select>
+      <div id="releaseNumberGroup" class="panel-form" hidden>
+        <button class="secondary-button" id="releaseNumber" type="button">Cancel &amp; reuse number</button>
+        <p class="panel-help">Printed but never sent to the client? Cancel it here and the next ${documentLabel} you finalize gets this number.</p>
+      </div>
+      ${isProforma ? '<button class="primary-button" id="convertToInvoice" type="button" hidden>Create tax invoice from this</button>' : ''}
       <button class="secondary-button" id="importLocalPresets" type="button">Import browser presets</button>
     </div>`;
   document.querySelector('.document-nav').after(workspace);
@@ -573,6 +607,24 @@ function initializeWorkspace() {
       renderDocumentState();
       await refreshCloudData();
     } catch (error) { showCloudError(error); renderDocumentState(); }
+  });
+  document.getElementById('releaseNumber').addEventListener('click', async () => {
+    if (!currentDocument || currentDocument.status !== 'issued') return;
+    const number = currentDocument.document_number;
+    if (!window.confirm(`Cancel ${number} and reuse its number?\n\nOnly do this if it was never sent to the client. The cancelled record stays in history, and ${number} will be assigned to the next ${documentLabel} you finalize.`)) return;
+    try {
+      currentDocument = await cloud.releaseNumber(currentDocument.id);
+      renderDocumentState();
+      await refreshCloudData();
+      setStatus(`${number} cancelled — number will be reused`);
+    } catch (error) { showCloudError(error); renderDocumentState(); }
+  });
+  document.getElementById('convertToInvoice')?.addEventListener('click', () => {
+    if (!currentDocument || currentDocument.status === 'draft') return;
+    try {
+      sessionStorage.setItem(proformaHandoffKey, JSON.stringify({ number: currentDocument.document_number, snapshot: currentDocument.snapshot }));
+    } catch { showCloudError(new Error('This browser blocked the hand-off. Allow site storage and try again.')); return; }
+    window.location.href = 'index.html';
   });
   document.getElementById('importLocalPresets').addEventListener('click', async () => {
     try {
@@ -672,17 +724,18 @@ async function handleCloudSession() {
 
 async function refreshCloudData() {
   if (!cloud.user) return;
-  const [presets, documents, sequence] = await Promise.all([
-    cloud.presets(documentType), cloud.documents(documentType), cloud.sequence(documentType),
+  const [presets, documents, nextNumber] = await Promise.all([
+    cloud.presets(documentType), cloud.documents(documentType), cloud.nextNumber(documentType),
   ]);
   cloudPresets = Object.fromEntries(presets.map(preset => [preset.name, preset.snapshot]));
   refreshPresetSelect();
   const history = document.getElementById('documentHistory');
   history.replaceChildren(new Option('Choose a saved document', ''));
-  documents.forEach(doc => history.add(new Option(`${doc.document_number || 'Draft'} · ${doc.client_name || 'Unnamed client'} · ${doc.status}`, doc.id)));
+  documents.forEach(doc => history.add(new Option(`${doc.document_number || 'Draft'} · ${doc.client_name || 'Unnamed client'} · ${doc.number_released_at ? 'cancelled, number reused' : doc.status}`, doc.id)));
   if (currentDocument) history.value = currentDocument.id;
-  document.getElementById('nextCloudNumber').textContent = sequence
-    ? `Next: ${isQuotation ? 'WCQ' : 'WC'}-${sequence.series_code}-${sequence.next_number}`
+  const reusing = nextNumber && documents.some(doc => doc.number_released_at && doc.document_number === nextNumber);
+  document.getElementById('nextCloudNumber').textContent = nextNumber
+    ? `Next: ${nextNumber}${reusing ? ' (reused from a cancelled document)' : ''}`
     : 'A new numbering series will start when you finalize your first document.';
 }
 
@@ -704,8 +757,8 @@ function validateDocument() {
   if (!InvoiceGST.validGstin(getPresetFieldText('supplierGstin'))) throw new Error('The supplier GSTIN is missing or has an invalid format/checksum.');
   const recipientType = document.getElementById('recipientTypeSelect').value;
   const gstin = getPresetFieldText('clientGstin').toUpperCase();
-  if (!isQuotation && recipientType === 'registered' && !InvoiceGST.validGstin(gstin)) throw new Error('Enter the client’s GSTIN, or select Unregistered (URP).');
-  if (!isQuotation && recipientType === 'uin' && !/^\d{2}[A-Z0-9]{13}$/.test(gstin)) throw new Error('Enter the recipient’s 15-character UIN.');
+  if (documentType === 'invoice' && recipientType === 'registered' && !InvoiceGST.validGstin(gstin)) throw new Error('Enter the client’s GSTIN, or select Unregistered (URP).');
+  if (documentType === 'invoice' && recipientType === 'uin' && !/^\d{2}[A-Z0-9]{13}$/.test(gstin)) throw new Error('Enter the recipient’s 15-character UIN.');
   if (!InvoiceGST.states[document.getElementById('placeOfSupplySelect').value]) throw new Error('Choose the place of supply.');
   for (const row of lineItems.querySelectorAll('.line-item')) {
     if (!row.querySelector('[data-item-description]').textContent.trim()) throw new Error('Each service needs a description.');
@@ -747,13 +800,17 @@ function renderDocumentState() {
   const issued = currentDocument && currentDocument.status !== 'draft';
   setDocumentLocked(Boolean(issued || isFinalizing));
   invoicePage.classList.toggle('is-draft', !issued);
-  invoicePage.dataset.watermark = isQuotation ? 'DRAFT QUOTATION' : 'DRAFT · NOT A TAX INVOICE';
+  invoicePage.dataset.watermark = isQuotation ? 'DRAFT QUOTATION' : isProforma ? 'DRAFT PROFORMA' : 'DRAFT · NOT A TAX INVOICE';
   document.getElementById('printInvoice').textContent = isFinalizing ? 'Finalizing…' : issued ? 'Reprint / Save PDF' : 'Finalize & Print';
   const status = document.getElementById('documentStatusSelect');
-  if (status) { status.value = currentDocument?.status || 'draft'; status.disabled = !issued; }
+  const released = Boolean(currentDocument?.number_released_at);
+  if (status) { status.value = currentDocument?.status || 'draft'; status.disabled = !issued || released; }
+  document.getElementById('releaseNumberGroup').hidden = currentDocument?.status !== 'issued' || Boolean(currentDocument?.snapshot?.einvoice?.enabled);
+  const convert = document.getElementById('convertToInvoice');
+  if (convert) convert.hidden = !issued || currentDocument.status === 'cancelled';
   if (issued) {
     setPresetField('invoiceNumber', currentDocument.document_number);
-    const labels = { issued: isQuotation ? 'Issued' : 'Unpaid', paid: 'Paid', cancelled: 'Cancelled' };
+    const labels = { issued: isQuotation ? 'Issued' : isProforma ? 'Awaiting payment' : 'Unpaid', paid: 'Paid', cancelled: 'Cancelled' };
     setPresetField('invoiceStatus', labels[currentDocument.status]);
   } else setPresetField('invoiceStatus', 'Draft');
 }

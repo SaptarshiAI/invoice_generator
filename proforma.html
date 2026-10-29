@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Proforma Studio</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-document-type="proforma">
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Proforma invoice controls">
+        <div class="brand">
+          <span class="brand-mark">PS</span>
+          <div>
+            <h1>Proforma Studio</h1>
+            <p>Editable designs for repeat clients.</p>
+          </div>
+        </div>
+
+        <nav class="document-nav" aria-label="Document type">
+          <a href="index.html">Invoice</a>
+          <a href="proforma.html" aria-current="page">Proforma</a>
+          <a href="quotation.html">Quotation</a>
+        </nav>
+
+        <section class="panel">
+          <div class="panel-title">
+            <span>Design</span>
+            <button class="ghost-button" id="resetDesign" type="button">Reset</button>
+          </div>
+          <label class="field-label" for="templateSelect">Template</label>
+          <select id="templateSelect" class="field-input template-select" aria-label="Choose proforma invoice design">
+            <option value="corporate">Corporate Teal - navy, teal, executive</option>
+            <option value="atelier">Atelier - warm premium brand</option>
+            <option value="signal">Signal - bold modern system</option>
+            <option value="porcelain" selected>Porcelain - plum, blush &amp; elegant serif</option>
+          </select>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title">
+            <span>Client Preset</span>
+            <button class="ghost-button" id="savePreset" type="button">Save</button>
+          </div>
+          <label class="field-label" for="presetName">Preset name</label>
+          <input id="presetName" class="field-input" value="Porcelain Default" />
+          <label class="field-label" for="presetSelect">Saved presets</label>
+          <select id="presetSelect" class="field-input">
+            <option value="">Choose a saved preset</option>
+          </select>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title">
+            <span>Brand Assets</span>
+          </div>
+          <label class="upload-card">
+            <input id="logoUpload" type="file" accept="image/*" />
+            <span>Upload logo</span>
+            <small>PNG, JPG, or SVG</small>
+          </label>
+          <button class="secondary-button slim-button" id="clearLogo" type="button">Remove logo</button>
+          <label class="upload-card">
+            <input id="imageUpload" type="file" accept="image/*" />
+            <span>Add cover image</span>
+            <small>Optional visual block</small>
+          </label>
+          <button class="secondary-button slim-button" id="clearImage" type="button">Remove cover image</button>
+        </section>
+
+        <section class="panel compact-panel">
+          <div class="panel-title">
+            <span>Proforma Tools</span>
+          </div>
+          <button class="primary-button" id="addItem" type="button">Add line item</button>
+          <button class="secondary-button" id="printInvoice" type="button">Finalize &amp; Print</button>
+          <p class="panel-help" id="printAuthHint">Sign in to assign a proforma number and print the final proforma invoice.</p>
+          <div class="print-feedback" id="printFeedback" tabindex="-1" hidden>
+            <p id="printFeedbackMessage" role="alert"></p>
+            <button class="secondary-button slim-button" id="printSignIn" type="button" hidden>Go to sign-in</button>
+          </div>
+          <button class="secondary-button" id="printDraft" type="button">Print draft</button>
+          <button class="secondary-button" id="newInvoice" type="button">New proforma</button>
+        </section>
+      </aside>
+
+      <main class="workspace">
+        <div class="topbar">
+          <div>
+            <strong>Proforma invoice — not a tax invoice. Click any field to edit.</strong>
+            <span>Use one preset per client to keep the design consistent.</span>
+          </div>
+          <div class="status-pill" id="saveStatus">Ready</div>
+        </div>
+
+        <article class="invoice-page template-porcelain" id="invoicePage">
+          <header class="invoice-hero">
+            <div class="brand-block">
+              <div class="logo-box" id="logoBox">
+                <img src="assets/wizardcoglogo-transparent-cropped.png" alt="WizardCog logo" />
+              </div>
+              <div>
+                <p class="eyebrow" contenteditable="true" data-preset-field="brandLabel">ERP That Works Like Magic</p>
+                <h2 contenteditable="true" data-preset-field="brandName">WizardCog</h2>
+                <div class="brand-contact">
+                  <p><span>Address</span><strong contenteditable="true" data-preset-field="senderAddress">7, Block-1, Flat - 7A, Om Residency, 83A, Cossipore Road, 4B bus stand, Cossipore, Kolkata, Kolkata, West Bengal, 700002</strong></p>
+                  <p><span>Email</span><strong contenteditable="true" data-preset-field="supportEmail">support@wizardcog.com</strong></p>
+                  <p><span>Phone</span><strong contenteditable="true" data-preset-field="phoneNumber">+91-7001656375</strong></p>
+                  <p><span>Website</span><strong contenteditable="true" data-preset-field="domain">wizardcog.com</strong></p>
+                </div>
+              </div>
+            </div>
+            <div class="invoice-title">
+              <p contenteditable="true" data-preset-field="invoiceType">Proforma Invoice</p>
+              <strong data-preset-field="invoiceNumber">DRAFT</strong>
+              <div class="invoice-info-card">
+                <div>
+                  <span>Proforma No.</span>
+                  <strong data-preset-field="invoiceNumber">DRAFT</strong>
+                </div>
+                <div>
+                  <span>Proforma Date</span>
+                  <strong data-preset-field="issueDate">July 1, 2026</strong>
+                </div>
+                <div>
+                  <span>Due Date</span>
+                  <strong data-preset-field="dueDate">July 15, 2026</strong>
+                </div>
+                <div>
+                  <span>Status</span>
+                  <strong data-preset-field="invoiceStatus">Draft</strong>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <section class="image-strip is-empty" id="imageStrip">
+            <span>Optional image area</span>
+          </section>
+
+          <section class="invoice-meta">
+            <div class="meta-card">
+              <span>Bill To</span>
+              <strong contenteditable="true" data-preset-field="clientName">Acme Labs Pvt Ltd</strong>
+              <p contenteditable="true" data-preset-field="clientAddress">91 Springboard, Sector V, Kolkata<br />West Bengal 700091</p>
+              <p class="party-tax"><span>GSTIN / UIN</span><strong contenteditable="true" data-preset-field="clientGstin" data-placeholder="Enter GSTIN or URP"></strong></p>
+              <p class="party-state" contenteditable="true" data-preset-field="clientState">West Bengal (19)</p>
+            </div>
+            <div class="meta-card">
+              <span>From</span>
+              <strong contenteditable="true" data-preset-field="senderName">WIZARDCOG</strong>
+              <p contenteditable="true" data-preset-field="senderAddress">7, Block-1, Flat - 7A, Om Residency, 83A, Cossipore Road, 4B bus stand, Cossipore, Kolkata, Kolkata, West Bengal, 700002</p>
+              <p class="party-tax"><span>GSTIN</span><strong contenteditable="true" data-preset-field="supplierGstin">19AAFFW5069E1ZV</strong></p>
+              <p class="party-state" data-preset-field="supplierState">West Bengal (19)</p>
+            </div>
+            <div class="meta-card compact">
+              <span>Issued</span>
+              <strong data-preset-field="issueDate">July 1, 2026</strong>
+              <span>Due</span>
+              <strong data-preset-field="dueDate">July 15, 2026</strong>
+            </div>
+          </section>
+
+          <section class="supply-details" aria-label="GST supply details">
+            <div><span>Place of supply</span><strong id="placeOfSupply">West Bengal (19)</strong></div>
+            <div><span>Reverse charge</span><strong id="reverseChargeText">No</strong></div>
+            <div><span>Document copy</span><strong data-preset-field="copyType">Proforma — not a tax invoice</strong></div>
+          </section>
+
+          <section class="invoice-table" aria-label="Proforma invoice line items">
+            <div class="table-head">
+              <span>Item</span>
+              <span>Qty</span>
+              <span>Rate</span>
+              <span>Total</span>
+            </div>
+            <div class="line-items" id="lineItems">
+              <div class="line-item">
+                <div class="item-description"><div contenteditable="true" data-item-description>AI workflow automation</div><small class="item-classification">SAC <span contenteditable="true" data-item-sac>998314</span><span class="item-gst-rate">GST 18%</span></small></div>
+                <div contenteditable="true" data-number="qty">1</div>
+                <div contenteditable="true" data-number="rate">85000</div>
+                <div class="line-total">₹85,000</div>
+                <button class="remove-line" type="button" aria-label="Remove line item">&times;</button>
+              </div>
+              <div class="line-item">
+                <div class="item-description"><div contenteditable="true" data-item-description>Website integration setup</div><small class="item-classification">SAC <span contenteditable="true" data-item-sac>998314</span><span class="item-gst-rate">GST 18%</span></small></div>
+                <div contenteditable="true" data-number="qty">1</div>
+                <div contenteditable="true" data-number="rate">25000</div>
+                <div class="line-total">₹25,000</div>
+                <button class="remove-line" type="button" aria-label="Remove line item">&times;</button>
+              </div>
+              <div class="line-item">
+                <div class="item-description"><div contenteditable="true" data-item-description>Monthly support</div><small class="item-classification">SAC <span contenteditable="true" data-item-sac>998313</span><span class="item-gst-rate">GST 18%</span></small></div>
+                <div contenteditable="true" data-number="qty">2</div>
+                <div contenteditable="true" data-number="rate">12000</div>
+                <div class="line-total">₹24,000</div>
+                <button class="remove-line" type="button" aria-label="Remove line item">&times;</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="invoice-summary">
+            <div class="note-box">
+              <span>Notes</span>
+              <p contenteditable="true" data-preset-field="notes">This is a proforma invoice, not a tax invoice. A GST tax invoice will be issued on receipt of payment / supply of services.</p>
+            </div>
+            <div class="totals-card">
+              <div>
+                <span>Taxable value</span>
+                <strong id="subtotal">₹134,000</strong>
+              </div>
+              <div class="gst-total-row">
+                <span>GST (18%)</span>
+                <strong id="taxAmount">₹24,120</strong>
+              </div>
+              <div class="tax-component" id="cgstRow"><span>CGST (9%)</span><strong id="cgstAmount">₹12,060</strong></div>
+              <div class="tax-component" id="sgstRow"><span>SGST (9%)</span><strong id="sgstAmount">₹12,060</strong></div>
+              <div class="tax-component" id="igstRow" hidden><span>IGST (18%)</span><strong id="igstAmount">₹24,120</strong></div>
+              <div class="grand-total">
+                <span>Amount Payable</span>
+                <strong id="grandTotal">₹158,120</strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="payment-section" aria-label="Payment details">
+            <div class="payment-box">
+              <span>Payment Details</span>
+              <div class="payment-grid">
+                <div>
+                  <small>Bank</small>
+                  <strong contenteditable="true" data-preset-field="bankName">Karur Vysya Bank</strong>
+                </div>
+                <div>
+                  <small>Account</small>
+                  <strong contenteditable="true" data-preset-field="accountNumber">3101135000023718</strong>
+                </div>
+                <div>
+                  <small>IFSC</small>
+                  <strong contenteditable="true" data-preset-field="ifscCode">KVBL0003101</strong>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="invoice-signing" aria-label="Delivery and authorisation">
+            <div class="delivery-details"><span>Delivery / service address</span><p contenteditable="true" data-preset-field="deliveryAddress">Same as billing address</p><small id="gstPaymentNote">GST is payable by the supplier.</small></div>
+            <div class="signature-block"><span>For <strong data-preset-field="senderName">WIZARDCOG</strong></span><div class="signature-image is-empty" id="signatureImage"></div><span class="signature-line"></span><strong contenteditable="true" data-preset-field="signatoryName" data-placeholder="Authorised signatory"></strong><small>Authorised signatory</small></div>
+          </section>
+
+          <footer class="invoice-footer">
+            <div class="footer-signoff">
+              <p class="footer-message" contenteditable="true" data-preset-field="footerMessage">Let's build what's next.</p>
+              <h3 contenteditable="true" data-preset-field="brandName">WizardCog</h3>
+              <p class="footer-tagline" contenteditable="true" data-preset-field="brandLabel">ERP That Works Like Magic</p>
+            </div>
+            <div class="contact-box">
+              <span>Contact</span>
+              <div class="contact-grid">
+                <div>
+                  <small>Support Email</small>
+                  <strong contenteditable="true" data-preset-field="supportEmail">support@wizardcog.com</strong>
+                </div>
+                <div>
+                  <small>Phone</small>
+                  <strong contenteditable="true" data-preset-field="phoneNumber">+91-7001656375</strong>
+                </div>
+                <div>
+                  <small>Website</small>
+                  <strong contenteditable="true" data-preset-field="domain">wizardcog.com</strong>
+                </div>
+              </div>
+            </div>
+          </footer>
+        </article>
+      </main>
+    </div>
+
+    <script src="gst.js"></script>
+    <script src="cloud-config.js"></script>
+    <script src="cloud.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

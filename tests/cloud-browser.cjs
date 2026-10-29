@@ -8,6 +8,9 @@ const adapter = `(() => {
   const read = () => JSON.parse(localStorage.getItem(key) || '{"docs":[],"presets":{},"next":583721,"saves":0,"finalizes":0}');
   const write = state => localStorage.setItem(key, JSON.stringify(state));
   const copy = value => JSON.parse(JSON.stringify(value));
+  const prefix = type => ({quotation:'WCQ',proforma:'WCP'}[type]||'WC');
+  const released = (state,type) => state.docs.filter(doc=>doc.document_type===type && doc.number_released_at
+    && !state.docs.some(active=>active.document_number===doc.document_number && !active.number_released_at)).map(doc=>doc.document_number).sort()[0];
   window.__cloudTest = { read, write };
   window.invoiceCloud = {
     ready: Promise.resolve(), get user() { return read().signedOut ? null : {id:'test-owner', email:'wizardcogofficial@gmail.com'}; }, failure:'',
@@ -18,7 +21,8 @@ const adapter = `(() => {
       if(state.failRefresh) { state.failRefresh=false; write(state); throw Error('Simulated refresh failure'); }
       return state.docs;
     },
-    async sequence() { return {series_code:'A7F3',next_number:read().next}; },
+    async nextNumber(type) { const state=read(); return released(state,type) || prefix(type)+'-A7F3-'+state.next; },
+    async releaseNumber(id) { const state=read(); const doc=state.docs.find(d=>d.id===id); doc.status='cancelled'; doc.number_released_at='2026-05-02'; write(state); return copy(doc); },
     async document(id) { return copy(read().docs.find(doc=>doc.id===id)); },
     async saveDraft(id,type,client_name,snapshot) {
       const state=read(); state.saves++;
@@ -32,7 +36,7 @@ const adapter = `(() => {
       const state=read(); state.finalizes++;
       const doc=state.docs.find(doc=>doc.id===id);
       if(doc.status==='draft') {
-        doc.status='issued'; doc.document_number=(doc.document_type==='quotation'?'WCQ':'WC')+'-A7F3-'+state.next++;
+        doc.status='issued'; doc.document_number=released(state,doc.document_type) || prefix(doc.document_type)+'-A7F3-'+state.next++;
         Object.assign(doc.snapshot.fields,{invoiceNumber:doc.document_number,issueDate:'May 1, 2026',dueDate:'May 16, 2026'});
         doc.issue_date='2026-05-01'; doc.due_date='2026-05-16';
       }
@@ -145,6 +149,44 @@ const adapter = `(() => {
       assert.equal(await page.evaluate(()=>window.__cloudTest.read().next),afterRetry.next);
       assert.deepEqual(errors,[]);
       console.log(type+': print blockers, sign-in shortcut, draft printing, finalize once, immutable records, presets and lost-response recovery passed');
+      await context.close();
+    }
+    // A never-sent proforma is cancelled, its number reused, then converted to a tax invoice draft.
+    {
+      const context=await browser.newContext();
+      const page=await context.newPage();
+      const errors=[];page.on('pageerror',error=>errors.push(error.message));
+      page.on('dialog',dialog=>dialog.accept());
+      await page.route('**/cloud.js',route=>route.fulfill({contentType:'application/javascript',body:adapter}));
+      await page.addInitScript(()=>{window.__prints=0;window.print=()=>{window.__prints++;};});
+      const issue=async()=>{
+        await page.goto(base+'/proforma.html');
+        await page.locator('#nextCloudNumber').filter({hasText:'WCP-A7F3-583721'}).waitFor();
+        await page.locator('[data-preset-field="clientName"]').fill('Proforma client');
+        await page.click('#printInvoice');
+        await page.waitForFunction(()=>window.__prints>=1);
+      };
+      await issue();
+      assert.equal(await page.locator('[data-preset-field="invoiceNumber"]').first().textContent(),'WCP-A7F3-583721');
+      assert.equal(await page.locator('[data-preset-field="invoiceType"]').textContent(),'Proforma Invoice');
+      await page.click('#releaseNumber');
+      await page.locator('#nextCloudNumber').filter({hasText:'reused'}).waitFor();
+      assert.equal(await page.locator('#releaseNumberGroup').isVisible(),false);
+      assert.equal(await page.locator('#documentStatusSelect').isDisabled(),true);
+      assert.equal(await page.locator('[data-preset-field="invoiceStatus"]').first().textContent(),'Cancelled');
+      await issue();
+      assert.equal(await page.locator('[data-preset-field="invoiceNumber"]').first().textContent(),'WCP-A7F3-583721');
+      assert.equal(await page.evaluate(()=>window.__cloudTest.read().next),583722);
+      await page.locator('#nextCloudNumber').filter({hasText:'WCP-A7F3-583722'}).waitFor();
+      await page.click('#convertToInvoice');
+      await page.waitForURL(/index\.html$/);
+      await page.waitForFunction(()=>document.querySelector('[data-preset-field="clientName"]').textContent==='Proforma client');
+      assert.equal(await page.locator('[data-preset-field="invoiceType"]').textContent(),'Tax Invoice');
+      assert.equal(await page.locator('[data-preset-field="invoiceNumber"]').first().textContent(),'DRAFT');
+      assert.equal(await page.locator('[data-preset-field="copyType"]').textContent(),'Original for Recipient');
+      assert.match(await page.locator('[data-preset-field="notes"]').textContent(),/Against proforma invoice WCP-A7F3-583721/);
+      assert.deepEqual(errors,[]);
+      console.log('proforma: own series, cancel-and-reuse number, and conversion to tax invoice draft passed');
       await context.close();
     }
   } finally {await browser.close();}

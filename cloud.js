@@ -66,7 +66,7 @@
     },
     async documents(type) {
       return unwrap(await (await connection()).from('documents')
-        .select('id,client_name,status,document_number,created_at')
+        .select('id,client_name,status,document_number,number_released_at,created_at')
         .eq('document_type', type).order('created_at', { ascending: false }).limit(200));
     },
     async document(id) {
@@ -88,8 +88,11 @@
         p_document_id: id, p_status: status,
       })));
     },
-    async sequence(type) {
-      return one(unwrap(await (await connection()).rpc('prepare_document_series', { p_document_type: type })));
+    async releaseNumber(id) {
+      return one(unwrap(await (await connection()).rpc('release_document_number', { p_document_id: id })));
+    },
+    async nextNumber(type) {
+      return unwrap(await (await connection()).rpc('next_document_number', { p_document_type: type }));
     },
     async saveBusinessSettings(settings) {
       unwrap(await (await connection()).from('business_settings')
