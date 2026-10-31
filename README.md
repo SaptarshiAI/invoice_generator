@@ -32,7 +32,7 @@ This is only offered for an issued, unpaid document without an IRN, and only wit
 
 ## Proforma invoices
 
-`proforma.html` issues proforma invoices with their own independent `WCP-` series, labelled "Proforma — not a tax invoice". Client GSTIN is optional on a proforma. Once the client pays or the supply happens, open the issued proforma and select **Create tax invoice from this**: the invoice page opens with the same client, services and tax settings as a fresh draft, noting the proforma number. Finalizing it then assigns the next tax-invoice number.
+`proforma.html` issues proforma invoices with their own independent `WCP-` series, labelled "Proforma — not a tax invoice". Client GSTIN is optional on a proforma. Once the client pays or the supply happens, open the issued proforma and select **Create tax invoice from this**: the invoice page opens with the same client, services and tax settings as a fresh draft, noting the proforma number. Finalizing it then assigns the next tax-invoice number. If the proforma's status is **Paid** when you create the tax invoice, the tax invoice finalizes and prints as Paid; otherwise it starts as Unpaid.
 
 ## Presets and business details
 

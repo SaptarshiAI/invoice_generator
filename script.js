@@ -34,6 +34,8 @@ let placeOfSupplyTouched = false;
 let totalsBreakdown;
 let isFinalizing = false;
 let draftSave = null;
+let paidFromProforma = false;
+let pendingPaidId = null;
 const templateClasses = [
   "template-corporate",
   "template-atelier",
@@ -294,6 +296,7 @@ function collectInvoiceState() {
       enabled: document.getElementById('eInvoiceEnabled').checked,
       qr: document.getElementById('irnQr').querySelector('img')?.src || '',
     },
+    paidFromProforma,
   };
 }
 
@@ -331,6 +334,7 @@ function applyInvoiceState(state, options = {}) {
   const copySelect = document.getElementById('copyTypeSelect');
   if (copySelect) copySelect.value = getPresetFieldText('copyType') === 'Duplicate for Supplier' ? 'supplier' : 'recipient';
   placeOfSupplyTouched = Boolean(state.taxSettings);
+  paidFromProforma = Boolean(options.document && state.paidFromProforma);
   if (!options.document) {
     currentDocument = null;
     setPresetField('invoiceNumber', 'DRAFT');
@@ -439,6 +443,7 @@ document.getElementById("resetDesign").addEventListener("click", () => {
   applyTemplate(defaultTemplate, { applyDefaults: true });
   clearCoverImage();
   currentDocument = null;
+  paidFromProforma = false;
   documentDirty = true;
   renderDocumentState();
   setStatus("Design reset");
@@ -529,11 +534,12 @@ function loadProformaHandoff() {
     ...snapshot.fields,
     invoiceType: wizardCogDefaults.invoiceType,
     copyType: wizardCogDefaults.copyType,
-    notes: `Against proforma invoice ${handoff.number}. ${wizardCogDefaults.notes}`,
+    notes: `Against proforma invoice ${handoff.number}. ${handoff.paid ? 'Payment received. Thank you for choosing WizardCog.' : wizardCogDefaults.notes}`,
   };
   applyInvoiceState(snapshot);
+  paidFromProforma = Boolean(handoff.paid);
   documentDirty = true;
-  setStatus(`Drafted from ${handoff.number}`);
+  setStatus(`Drafted from ${handoff.number}${handoff.paid ? ' — will finalize as Paid' : ''}`);
 }
 
 function initializeWorkspace() {
@@ -643,7 +649,7 @@ function initializeWorkspace() {
   document.getElementById('convertToInvoice')?.addEventListener('click', () => {
     if (!currentDocument || currentDocument.status === 'draft') return;
     try {
-      sessionStorage.setItem(proformaHandoffKey, JSON.stringify({ number: currentDocument.document_number, snapshot: currentDocument.snapshot }));
+      sessionStorage.setItem(proformaHandoffKey, JSON.stringify({ number: currentDocument.document_number, paid: currentDocument.status === 'paid', snapshot: currentDocument.snapshot }));
     } catch { showCloudError(new Error('This browser blocked the hand-off. Allow site storage and try again.')); return; }
     window.location.href = 'index.html';
   });
@@ -851,6 +857,7 @@ async function finalizeAndPrint() {
         currentDocument = saved;
         applyInvoiceState(saved.snapshot, { document: true });
         documentDirty = false;
+        if (paidFromProforma) pendingPaidId = saved.id;
       }
     }
     if (!currentDocument || currentDocument.status === 'draft') {
@@ -861,6 +868,13 @@ async function finalizeAndPrint() {
       currentDocument = await cloud.finalize(currentDocument.id);
       applyInvoiceState(currentDocument.snapshot, { document: true });
       documentDirty = false;
+      if (paidFromProforma) pendingPaidId = currentDocument.id;
+      renderDocumentState();
+    }
+    // Before printing, so the first copy reads Paid. A failure leaves it pending for the next click.
+    if (currentDocument.id === pendingPaidId && currentDocument.status === 'issued') {
+      currentDocument = await cloud.setStatus(currentDocument.id, 'paid');
+      pendingPaidId = null;
       renderDocumentState();
     }
     try { await refreshCloudData(); }

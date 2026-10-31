@@ -44,7 +44,7 @@ const adapter = `(() => {
       if(lost) throw Error('Simulated lost finalization response');
       return copy(doc);
     },
-    async setStatus(id,status) { const state=read(); const doc=state.docs.find(d=>d.id===id); doc.status=status; write(state); return copy(doc); },
+    async setStatus(id,status) { const state=read(); if(state.failStatus) { state.failStatus=false; write(state); throw Error('Simulated status failure'); } const doc=state.docs.find(d=>d.id===id); doc.status=status; write(state); return copy(doc); },
     async savePreset(type,name,snapshot) { const state=read();state.presets[type+':'+name]={document_type:type,name,snapshot};write(state); }
   };
 })();`;
@@ -158,7 +158,7 @@ const adapter = `(() => {
       const errors=[];page.on('pageerror',error=>errors.push(error.message));
       page.on('dialog',dialog=>dialog.accept());
       await page.route('**/cloud.js',route=>route.fulfill({contentType:'application/javascript',body:adapter}));
-      await page.addInitScript(()=>{window.__prints=0;window.print=()=>{window.__prints++;};});
+      await page.addInitScript(()=>{window.__prints=0;window.print=()=>{window.__prints++;window.__printedStatus=document.querySelector('[data-preset-field="invoiceStatus"]').textContent;};});
       const issue=async()=>{
         await page.goto(base+'/proforma.html');
         await page.locator('#nextCloudNumber').filter({hasText:'WCP-A7F3-583721'}).waitFor();
@@ -201,8 +201,42 @@ const adapter = `(() => {
       assert.equal(await page.locator('[data-preset-field="invoiceNumber"]').first().textContent(),'DRAFT');
       assert.equal(await page.locator('[data-preset-field="copyType"]').textContent(),'Original for Recipient');
       assert.match(await page.locator('[data-preset-field="notes"]').textContent(),/Against proforma invoice WCP-A7F3-583721/);
+      await page.selectOption('#recipientTypeSelect','unregistered');
+      await page.click('#printInvoice');
+      await page.waitForFunction(()=>window.__prints===1);
+      assert.equal(await page.evaluate(()=>window.__printedStatus),'Unpaid');
+      // A paid proforma's tax invoice prints as Paid, even from a draft reopened later.
+      await page.goto(base+'/proforma.html');
+      await page.locator('#nextCloudNumber').filter({hasText:'WCP-A7F3-'}).waitFor();
+      await page.locator('[data-preset-field="clientName"]').fill('Paid client');
+      await page.click('#printInvoice');
+      await page.waitForFunction(()=>window.__prints===1);
+      await page.selectOption('#documentStatusSelect','paid');
+      await page.locator('[data-preset-field="invoiceStatus"]').first().filter({hasText:'Paid'}).waitFor();
+      await page.click('#convertToInvoice');
+      await page.waitForURL(/index\.html$/);
+      await page.waitForFunction(()=>document.querySelector('[data-preset-field="clientName"]').textContent==='Paid client');
+      assert.match(await page.locator('[data-preset-field="notes"]').textContent(),/Payment received/);
+      await page.selectOption('#recipientTypeSelect','unregistered');
+      await page.click('#saveDraft');
+      await page.waitForFunction(()=>window.__cloudTest.read().docs.some(doc=>doc.client_name==='Paid client'&&doc.document_type==='invoice'));
+      const paidDraft=await page.evaluate(()=>window.__cloudTest.read().docs.find(doc=>doc.client_name==='Paid client'&&doc.document_type==='invoice').id);
+      await page.goto(base+'/index.html');
+      await page.locator('#documentHistory option[value="'+paidDraft+'"]').waitFor({state:'attached'});
+      await page.selectOption('#documentHistory',paidDraft);
+      await page.waitForFunction(()=>document.querySelector('[data-preset-field="clientName"]').textContent==='Paid client');
+      assert.equal(await page.locator('[data-preset-field="invoiceStatus"]').first().textContent(),'Draft');
+      // If marking it paid fails, nothing prints as Unpaid and the next click finishes the job.
+      await page.evaluate(()=>{const state=window.__cloudTest.read();state.failStatus=true;window.__cloudTest.write(state);});
+      await page.click('#printInvoice');
+      await page.locator('#cloudStatus').filter({hasText:'Simulated status failure'}).waitFor();
+      assert.equal(await page.evaluate(()=>window.__prints),0);
+      await page.click('#printInvoice');
+      await page.waitForFunction(()=>window.__prints===1);
+      assert.equal(await page.evaluate(()=>window.__printedStatus),'Paid');
+      assert.equal(await page.evaluate(id=>window.__cloudTest.read().docs.find(doc=>doc.id===id).status,paidDraft),'paid');
       assert.deepEqual(errors,[]);
-      console.log('proforma: own series, cancel-and-reuse number, and conversion to tax invoice draft passed');
+      console.log('proforma: own series, cancel-and-reuse number, conversion to tax invoice draft and paid carry-over passed');
       await context.close();
     }
   } finally {await browser.close();}
